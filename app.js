@@ -31,7 +31,7 @@ function madridDateWithOffset(date,time,hours=0){
  const clean=cleanDate(date);
  if(!clean||!time)return new Date(NaN);
  const [y,m,d]=clean.split('-').map(Number);
- const parts=String(time).match(/^(\\d{1,2}):(\\d{2})$/);
+ const parts=String(time).trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
  if(!parts)return new Date(NaN);
  const hh=Number(parts[1]),mm=Number(parts[2]);
  if(hh>23||mm>59)return new Date(NaN);
@@ -53,47 +53,49 @@ function past(){
   const now = new Date();
   const byDate = {};
 
-  // Agrupamos los directos por fecha para poder calcular correctamente
-  // el segundo directo aunque no tenga HORA_ESPAÑA propia.
+  // Cada directo se evalúa por separado. El segundo (y siguientes) no
+  // dependen de que cambie el día: se calculan a partir del primero
+  // que tenga una hora válida.
   streams.forEach(s => {
     const date = cleanDate(field(s,"FECHA"));
     if(!date) return;
     (byDate[date] ||= []).push(s);
   });
 
-  return streams.filter(s => {
-    const date = cleanDate(field(s,"FECHA"));
-    if(!date) return false;
+  const result = [];
 
-    const sameDay = byDate[date] || [];
-    const rawSlot = field(s,"DIRECTO").toLowerCase().trim();
-    const slotMatch = rawSlot.match(/(?:^|\D)([12])(?:\D|$)/);
-    const slot = slotMatch ? slotMatch[1] : "";
+  Object.entries(byDate).forEach(([date, dayStreams]) => {
+    // Ordenamos por número de directo. Si no existe, conservamos el orden
+    // de la hoja como desempate.
+    const ordered = dayStreams.map((s,index)=>({s,index})).sort((a,b)=>{
+      const na = parseInt(String(field(a.s,"DIRECTO")).match(/\d+/)?.[0] || "9999",10);
+      const nb = parseInt(String(field(b.s,"DIRECTO")).match(/\d+/)?.[0] || "9999",10);
+      return na-nb || a.index-b.index;
+    }).map(x=>x.s);
 
-    let time = field(s,"HORA_ESPAÑA");
+    const firstWithTime = ordered.find(s => String(field(s,"HORA_ESPAÑA")||"").trim());
+    const firstTime = firstWithTime ? String(field(firstWithTime,"HORA_ESPAÑA")).trim() : "";
 
-    // Si este directo no tiene hora, lo tratamos como el segundo directo
-    // y usamos la hora del primero del mismo día.
-    if(!time){
-      const first = sameDay
-        .filter(x => field(x,"HORA_ESPAÑA"))
-        .sort((a,b) => field(a,"HORA_ESPAÑA").localeCompare(field(b,"HORA_ESPAÑA")))[0];
+    ordered.forEach((s,index)=>{
+      let time = String(field(s,"HORA_ESPAÑA")||"").trim();
 
-      if(!first) return false;
-      time = field(first,"HORA_ESPAÑA");
-    }
+      // Si un directo no tiene hora propia, usamos la del primero del día.
+      if(!time) time = firstTime;
+      if(!time) return;
 
-    // El primer directo cuenta una hora después de empezar.
-    // El segundo cuenta dos horas después de empezar el primero.
-    // Si el CSV identifica explícitamente el slot 2, usamos siempre +2h.
-    let hours = slot === "2" ? 2 : 1;
+      // Un directo con hora propia termina/cuenta una hora después.
+      // Los siguientes sin hora propia terminan según su posición:
+      // 1.º = +1h, 2.º = +2h, 3.º = +3h, etc.
+      const hours = String(field(s,"HORA_ESPAÑA")||"").trim()
+        ? 1
+        : index + 1;
 
-    // Si no hay slot explícito y este directo no tiene hora propia,
-    // es el que va después del primero: +2h.
-    if(!field(s,"HORA_ESPAÑA") && slot !== "1") hours = 2;
-
-    return madridDateWithOffset(date,time,hours) <= now;
+      const end = madridDateWithOffset(date,time,hours);
+      if(!isNaN(end.getTime()) && end <= now) result.push(s);
+    });
   });
+
+  return result;
 }
 function tz(){return selectedTZ==='auto'?Intl.DateTimeFormat().resolvedOptions().timeZone:selectedTZ}
 function madridToVisitor(date,time){
@@ -170,3 +172,16 @@ function restoreRoute(push=false){
 }
 async function init(){try{[games,series,streams]=await Promise.all([loadCSV(SOURCES.games),loadCSV(SOURCES.series),loadCSV(SOURCES.streams)]);setupTZ();setupNav();setupWeek();setupCatalog();setupExtra();renderToday();renderWeek();renderStats();renderGames();renderSeries();restoreRoute(false)}catch(e){console.error(e);document.getElementById('today').innerHTML='<div class="empty">No se ha podido cargar el calendario.</div>'}}
 init();
+
+// Las estadísticas dependen de la hora actual, no del cambio de día.
+// Refrescamos cada 30 segundos para que un directo pase a "contado"
+// automáticamente cuando se cumple su hora de finalización.
+setInterval(()=>{
+  if(streams.length){
+    renderStats();
+    if(document.getElementById('calendario')?.classList.contains('active')){
+      renderToday();
+      renderWeek();
+    }
+  }
+},30000);
