@@ -51,29 +51,47 @@ function madridDateWithOffset(date,time,hours=0){
 }
 function past(){
   const now = new Date();
+  const byDate = {};
+
+  // Agrupamos los directos por fecha para poder calcular correctamente
+  // el segundo directo aunque no tenga HORA_ESPAÑA propia.
+  streams.forEach(s => {
+    const date = cleanDate(field(s,"FECHA"));
+    if(!date) return;
+    (byDate[date] ||= []).push(s);
+  });
+
   return streams.filter(s => {
     const date = cleanDate(field(s,"FECHA"));
     if(!date) return false;
 
-    const slot = field(s,"DIRECTO") || "1";
+    const sameDay = byDate[date] || [];
+    const rawSlot = field(s,"DIRECTO").toLowerCase().trim();
+    const slotMatch = rawSlot.match(/(?:^|\D)([12])(?:\D|$)/);
+    const slot = slotMatch ? slotMatch[1] : "";
+
     let time = field(s,"HORA_ESPAÑA");
 
-    // El segundo directo no tiene hora propia: se contabiliza
-    // 2 horas después del comienzo del primero.
-    if(slot === "2" && !time){
-      const first = streams.find(x =>
-        cleanDate(field(x,"FECHA")) === date &&
-        (field(x,"DIRECTO") || "1") === "1" &&
-        field(x,"HORA_ESPAÑA")
-      );
+    // Si este directo no tiene hora, lo tratamos como el segundo directo
+    // y usamos la hora del primero del mismo día.
+    if(!time){
+      const first = sameDay
+        .filter(x => field(x,"HORA_ESPAÑA"))
+        .sort((a,b) => field(a,"HORA_ESPAÑA").localeCompare(field(b,"HORA_ESPAÑA")))[0];
+
       if(!first) return false;
       time = field(first,"HORA_ESPAÑA");
     }
 
-    if(!time) return false;
+    // El primer directo cuenta una hora después de empezar.
+    // El segundo cuenta dos horas después de empezar el primero.
+    // Si el CSV identifica explícitamente el slot 2, usamos siempre +2h.
+    let hours = slot === "2" ? 2 : 1;
 
-    // Primer directo: +1h. Segundo directo: +2h.
-    const hours = slot === "2" ? 2 : 1;
+    // Si no hay slot explícito y este directo no tiene hora propia,
+    // es el que va después del primero: +2h.
+    if(!field(s,"HORA_ESPAÑA") && slot !== "1") hours = 2;
+
     return madridDateWithOffset(date,time,hours) <= now;
   });
 }
