@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Calendario de Twitch</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <div><strong>Calendario de Twitch</strong><small>Directos, juegos y series</small></div>
+    </div>
+    <div class="timezone"><span id="loadStatus" class="load-status">Cargando…</span>
+      <span id="tzFlag">🌍</span>
+      <label for="timezoneSelect">Horario</label>
+      <select id="timezoneSelect" aria-label="Zona horaria">
+        <option value="auto">Automático</option>
+        <option value="Europe/Madrid">España</option>
+        <option value="America/Argentina/Buenos_Aires">Argentina</option>
+        <option value="America/Santiago">Chile</option>
+        <option value="America/Lima">Perú</option>
+        <option value="America/Bogota">Colombia</option>
+        <option value="America/Mexico_City">México</option>
+        <option value="America/New_York">Nueva York</option>
+        <option value="America/Los_Angeles">Los Ángeles</option>
+      </select>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <p class="eyebrow">PRÓXIMOS DIRECTOS</p>
+        <h1>¿Qué toca esta semana?</h1>
+        <p class="subtitle">Los horarios se muestran automáticamente en tu zona horaria.</p>
+      </div>
+      <div class="week-nav">
+        <button id="prevWeek" aria-label="Semana anterior">‹</button>
+        <button id="todayBtn">Esta semana</button>
+        <button id="nextWeek" aria-label="Semana siguiente">›</button>
+      </div>
+    </section>
+
+    <section id="calendar" class="calendar" aria-live="polite"></section>
+
+    <section class="section">
+      <div class="section-title"><div><p class="eyebrow">HISTORIAL</p><h2>Juegos y series</h2></div></div>
+      <div id="history" class="history-grid"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-title"><div><p class="eyebrow">ESTADÍSTICAS</p><h2>El historial del canal</h2></div></div>
+      <div id="stats" class="stats-grid"></div>
+    </section>
+  </main>
+
+  <footer><span>Calendario de Twitch</span><span>Los horarios se convierten automáticamente.</span></footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
