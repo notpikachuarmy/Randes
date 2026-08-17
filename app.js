@@ -17,47 +17,6 @@ const TIMEZONES=[
 let games=[],series=[],streams=[],selectedTZ="auto",weekOffset=0;
 
 
-function completedStreamsForStats(){
-  const now = new Date();
-  return streams.filter(s => {
-    const ds = streamDate(s);
-    if (!ds) return false;
-    const slot = String(s.DIRECTO || "1").trim();
-    let time = String(s.HORA_ESPAÑA || "").trim();
-
-    if (slot === "2" && !time) {
-      const first = streams.find(x =>
-        streamDate(x) === ds &&
-        String(x.DIRECTO || "").trim() === "1" &&
-        String(x.HORA_ESPAÑA || "").trim()
-      );
-      if (!first) return false;
-      time = String(first.HORA_ESPAÑA).trim();
-    }
-
-    if (!time) return false;
-    const hours = slot === "2" ? 2 : 1;
-    return madridDateWithOffset(ds, time, hours) <= now;
-  });
-}
-
-function madridDateWithOffset(dateStr,timeStr,hours){
-  const [y,m,d]=dateStr.split("-").map(Number);
-  const [hh,mm]=timeStr.split(":").map(Number);
-  let guess=new Date(Date.UTC(y,m-1,d,hh,mm));
-  for(let i=0;i<5;i++){
-    const parts=new Intl.DateTimeFormat("en-US",{
-      timeZone:"Europe/Madrid",hour12:false,year:"numeric",month:"2-digit",
-      day:"2-digit",hour:"2-digit",minute:"2-digit"
-    }).formatToParts(guess);
-    const get=k=>Number(parts.find(p=>p.type===k).value);
-    const wall=Date.UTC(get("year"),get("month")-1,get("day"),get("hour")%24,get("minute"));
-    const target=Date.UTC(y,m-1,d,hh,mm);
-    guess=new Date(guess.getTime()-(wall-target));
-  }
-  return new Date(guess.getTime()+hours*3600000);
-}
-
 function parseCSV(text){
  const rows=[];let row=[],cell="",q=false;
  for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1];if(c==='"'&&q&&n==='"'){cell+='"';i++;continue}if(c==='"'){q=!q;continue}if(c===','&&!q){row.push(cell.trim());cell="";continue}if((c==='\n'||c==='\r')&&!q){if(c==='\r'&&n==='\n')i++;row.push(cell.trim());cell="";if(row.some(v=>v!==''))rows.push(row);row=[];continue}cell+=c}if(cell||row.length){row.push(cell.trim());rows.push(row)}const headers=(rows.shift()||[]).map(h=>h.replace(/^\uFEFF/,'').trim());return rows.map(r=>Object.fromEntries(headers.map((h,i)=>[h,r[i]??""])));
@@ -68,7 +27,34 @@ function game(id){return games.find(x=>field(x,"ID_JUEGO")===id)||{}}
 function serie(id){return series.find(x=>field(x,"ID_SERIE")===id)||{}}
 function cleanDate(v){if(!v)return "";v=String(v).trim();let m=v.match(/^(\d{4})[-\/]([01]?\d)[-\/]([0-3]?\d)/);if(m)return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;m=v.match(/^([0-3]?\d)[-\/]([01]?\d)[-\/](\d{4})/);if(m)return `${m[3]}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`;const d=new Date(v);if(!isNaN(d))return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;return v}
 function madridToday(){return new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Madrid',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())}
-function past(){const today=madridToday();return streams.filter(s=>cleanDate(field(s,"FECHA"))<today)}
+function past(){
+  const now = new Date();
+  return streams.filter(s => {
+    const date = cleanDate(field(s,"FECHA"));
+    if(!date) return false;
+
+    const slot = field(s,"DIRECTO") || "1";
+    let time = field(s,"HORA_ESPAÑA");
+
+    // El segundo directo no tiene hora propia: se contabiliza
+    // 2 horas después del comienzo del primero.
+    if(slot === "2" && !time){
+      const first = streams.find(x =>
+        cleanDate(field(x,"FECHA")) === date &&
+        (field(x,"DIRECTO") || "1") === "1" &&
+        field(x,"HORA_ESPAÑA")
+      );
+      if(!first) return false;
+      time = field(first,"HORA_ESPAÑA");
+    }
+
+    if(!time) return false;
+
+    // Primer directo: +1h. Segundo directo: +2h.
+    const hours = slot === "2" ? 2 : 1;
+    return madridDateWithOffset(date,time,hours) <= now;
+  });
+}
 function tz(){return selectedTZ==='auto'?Intl.DateTimeFormat().resolvedOptions().timeZone:selectedTZ}
 function madridToVisitor(date,time){
  if(!time)return "Después del primero";
