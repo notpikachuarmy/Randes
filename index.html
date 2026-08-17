@@ -7,57 +7,68 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <span class="brand-dot"></span>
-      <div><strong>Calendario de Twitch</strong><small>Directos, juegos y series</small></div>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <div>
+      <h1>Calendario de Twitch</h1>
+      <p class="subtitle">Próximos directos, historial y estadísticas</p>
     </div>
-    <div class="timezone"><span id="loadStatus" class="load-status">Cargando…</span>
-      <span id="tzFlag">🌍</span>
-      <label for="timezoneSelect">Horario</label>
-      <select id="timezoneSelect" aria-label="Zona horaria">
-        <option value="auto">Automático</option>
-        <option value="Europe/Madrid">España</option>
-        <option value="America/Argentina/Buenos_Aires">Argentina</option>
-        <option value="America/Santiago">Chile</option>
-        <option value="America/Lima">Perú</option>
-        <option value="America/Bogota">Colombia</option>
-        <option value="America/Mexico_City">México</option>
-        <option value="America/New_York">Nueva York</option>
-        <option value="America/Los_Angeles">Los Ángeles</option>
-      </select>
-    </div>
-  </header>
+    <nav>
+      <button class="nav-btn active" data-page="inicio">Inicio</button>
+      <button class="nav-btn" data-page="historial">Historial</button>
+      <button class="nav-btn" data-page="estadisticas">Estadísticas</button>
+    </nav>
+  </div>
+</header>
 
-  <main>
-    <section class="hero">
+<main class="wrap">
+  <section id="inicio" class="page active">
+    <div class="hero-row">
       <div>
-        <p class="eyebrow">PRÓXIMOS DIRECTOS</p>
-        <h1>¿Qué toca esta semana?</h1>
-        <p class="subtitle">Los horarios se muestran automáticamente en tu zona horaria.</p>
+        <p class="eyebrow">HOY</p>
+        <h2>¿Qué toca hoy?</h2>
       </div>
-      <div class="week-nav">
-        <button id="prevWeek" aria-label="Semana anterior">‹</button>
-        <button id="todayBtn">Esta semana</button>
-        <button id="nextWeek" aria-label="Semana siguiente">›</button>
+      <label class="timezone-control">
+        <span>Horario</span>
+        <select id="timezoneSelect"></select>
+      </label>
+    </div>
+    <div id="today"></div>
+
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">PRÓXIMOS DÍAS</p>
+        <h2>Esta semana</h2>
       </div>
-    </section>
+      <div class="week-controls">
+        <button id="prevWeek">←</button>
+        <button id="todayWeek">Hoy</button>
+        <button id="nextWeek">→</button>
+      </div>
+    </div>
+    <div id="week"></div>
+  </section>
 
-    <section id="calendar" class="calendar" aria-live="polite"></section>
+  <section id="historial" class="page">
+    <div class="page-heading">
+      <p class="eyebrow">HISTORIAL</p>
+      <h2>Juegos y series</h2>
+      <p>Explora qué has emitido y las series que pertenecen a cada juego.</p>
+    </div>
+    <div id="history"></div>
+  </section>
 
-    <section class="section">
-      <div class="section-title"><div><p class="eyebrow">HISTORIAL</p><h2>Juegos y series</h2></div></div>
-      <div id="history" class="history-grid"></div>
-    </section>
+  <section id="estadisticas" class="page">
+    <div class="page-heading">
+      <p class="eyebrow">ESTADÍSTICAS</p>
+      <h2>Las cifras del canal</h2>
+      <p>Solo cuentan directos cuya fecha ya ha pasado. El calendario futuro no altera las estadísticas.</p>
+    </div>
+    <div id="stats"></div>
+  </section>
+</main>
 
-    <section class="section">
-      <div class="section-title"><div><p class="eyebrow">ESTADÍSTICAS</p><h2>El historial del canal</h2></div></div>
-      <div id="stats" class="stats-grid"></div>
-    </section>
-  </main>
-
-  <footer><span>Calendario de Twitch</span><span>Los horarios se convierten automáticamente.</span></footer>
-
-  <script src="app.js"></script>
+<footer><div class="wrap">Calendario de Twitch</div></footer>
+<script src="app.js"></script>
 </body>
 </html>
