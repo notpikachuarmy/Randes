@@ -16,13 +16,13 @@
       <nav>
         <button class="nav-btn active" data-page="inicio">Inicio</button>
         <button class="nav-btn" data-page="calendario">Calendario</button>
-        <button class="nav-btn" data-page="series">Series</button>
+        <button class="nav-btn" data-page="catalogo">Juegos/Series</button>
       </nav>
       <div class="socials">
-        <a href="https://www.twitch.tv/elrandes" target="_blank" rel="noopener" aria-label="Twitch">Twitch</a>
-        <a href="https://www.youtube.com/@elrandes" target="_blank" rel="noopener" aria-label="YouTube">YouTube</a>
-        <a href="https://www.youtube.com/@ElRandesDirectos" target="_blank" rel="noopener" aria-label="Directos">Directos</a>
-        <a href="https://twitter.com/El_Randes" target="_blank" rel="noopener" aria-label="Twitter">Twitter</a>
+        <a href="https://www.twitch.tv/elrandes" target="_blank" rel="noopener">Twitch</a>
+        <a href="https://www.youtube.com/@elrandes" target="_blank" rel="noopener">YouTube</a>
+        <a href="https://www.youtube.com/@ElRandesDirectos" target="_blank" rel="noopener">Directos</a>
+        <a href="https://twitter.com/El_Randes" target="_blank" rel="noopener">Twitter</a>
       </div>
     </div>
   </header>
@@ -32,7 +32,7 @@
       <div class="intro">
         <p class="eyebrow">BIENVENIDO</p>
         <h1>NotPikachu Army</h1>
-        <p>La comunidad de Randes. Aquí puedes consultar cuándo son los próximos directos, descubrir las series y ver el historial del canal.</p>
+        <p>La NotPikachu army, es la comunidad de Randes. Bienvenido a la familia.</p>
       </div>
     </section>
 
@@ -70,14 +70,25 @@
       </div>
     </section>
 
-    <section id="series" class="page">
+    <section id="catalogo" class="page">
       <div class="page-top">
         <div>
-          <p class="eyebrow">SERIES</p>
-          <h1>Todas las series</h1>
+          <p class="eyebrow">CATÁLOGO</p>
+          <h1>Juegos/Series</h1>
         </div>
       </div>
-      <div id="seriesList" class="series-grid"></div>
+      <div class="catalog-tabs">
+        <button class="catalog-btn active" data-catalog="juegos">Juegos</button>
+        <button class="catalog-btn" data-catalog="series">Series</button>
+      </div>
+
+      <div id="catalog-juegos" class="catalog-page active">
+        <div id="gamesList" class="games-grid"></div>
+      </div>
+      <div id="catalog-series" class="catalog-page">
+        <div id="seriesList" class="series-grid"></div>
+      </div>
+      <div id="catalog-detail" class="catalog-page"></div>
     </section>
   </main>
 
