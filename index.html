@@ -3,72 +3,95 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Calendario de Twitch</title>
+  <meta name="theme-color" content="#0e0e12">
+  <title>NotPikachu Army</title>
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header class="site-header">
-  <div class="wrap header-inner">
-    <div>
-      <h1>Calendario de Twitch</h1>
-      <p class="subtitle">Próximos directos, historial y estadísticas</p>
-    </div>
-    <nav>
-      <button class="nav-btn active" data-page="inicio">Inicio</button>
-      <button class="nav-btn" data-page="historial">Historial</button>
-      <button class="nav-btn" data-page="estadisticas">Estadísticas</button>
-    </nav>
-  </div>
-</header>
-
-<main class="wrap">
-  <section id="inicio" class="page active">
-    <div class="hero-row">
-      <div>
-        <p class="eyebrow">HOY</p>
-        <h2>¿Qué toca hoy?</h2>
-      </div>
-      <label class="timezone-control">
-        <span>Horario</span>
-        <select id="timezoneSelect"></select>
-      </label>
-    </div>
-    <div id="today"></div>
-
-    <div class="section-heading">
-      <div>
-        <p class="eyebrow">PRÓXIMOS DÍAS</p>
-        <h2>Esta semana</h2>
-      </div>
-      <div class="week-controls">
-        <button id="prevWeek">←</button>
-        <button id="todayWeek">Hoy</button>
-        <button id="nextWeek">→</button>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="#inicio" data-route="inicio">NotPikachu Army</a>
+      <nav>
+        <button class="nav-btn active" data-page="inicio">Inicio</button>
+        <button class="nav-btn" data-page="calendario">Calendario</button>
+        <button class="nav-btn" data-page="series">Series</button>
+      </nav>
+      <div class="socials">
+        <a href="https://www.twitch.tv/elrandes" target="_blank" rel="noopener" aria-label="Twitch">Twitch</a>
+        <a href="https://www.youtube.com/@elrandes" target="_blank" rel="noopener" aria-label="YouTube">YouTube</a>
+        <a href="https://www.youtube.com/@ElRandesDirectos" target="_blank" rel="noopener" aria-label="Directos">Directos</a>
+        <a href="https://twitter.com/El_Randes" target="_blank" rel="noopener" aria-label="Twitter">Twitter</a>
       </div>
     </div>
-    <div id="week"></div>
-  </section>
+  </header>
 
-  <section id="historial" class="page">
-    <div class="page-heading">
-      <p class="eyebrow">HISTORIAL</p>
-      <h2>Juegos y series</h2>
-      <p>Explora qué has emitido y las series que pertenecen a cada juego.</p>
+  <main class="wrap">
+    <section id="inicio" class="page active">
+      <div class="intro">
+        <p class="eyebrow">BIENVENIDO</p>
+        <h1>NotPikachu Army</h1>
+        <p>La comunidad de Randes. Aquí puedes consultar cuándo son los próximos directos, descubrir las series y ver el historial del canal.</p>
+      </div>
+    </section>
+
+    <section id="calendario" class="page">
+      <div class="page-top">
+        <div>
+          <p class="eyebrow">CALENDARIO</p>
+          <h1>¿Qué toca hoy?</h1>
+        </div>
+        <label class="timezone-control">
+          <span>Horario</span>
+          <select id="timezoneSelect"></select>
+        </label>
+      </div>
+
+      <div id="today"></div>
+
+      <div class="subnav">
+        <button class="sub-btn active" data-subpage="semana">Semana</button>
+        <button class="sub-btn" data-subpage="stats">Estadísticas</button>
+      </div>
+
+      <div id="semana" class="subpage active">
+        <div class="week-heading">
+          <button id="prevWeek" class="square-btn">←</button>
+          <strong id="weekTitle"></strong>
+          <button id="todayWeek" class="week-today">Hoy</button>
+          <button id="nextWeek" class="square-btn">→</button>
+        </div>
+        <div class="week-scroll"><div id="week" class="week-grid"></div></div>
+      </div>
+
+      <div id="stats" class="subpage">
+        <div id="statsContent"></div>
+      </div>
+    </section>
+
+    <section id="series" class="page">
+      <div class="page-top">
+        <div>
+          <p class="eyebrow">SERIES</p>
+          <h1>Todas las series</h1>
+        </div>
+      </div>
+      <div id="seriesList" class="series-grid"></div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <span>NotPikachu Army</span>
+      <div class="socials">
+        <a href="https://www.twitch.tv/elrandes" target="_blank" rel="noopener">Twitch</a>
+        <a href="https://www.youtube.com/@elrandes" target="_blank" rel="noopener">YouTube</a>
+        <a href="https://www.youtube.com/@ElRandesDirectos" target="_blank" rel="noopener">Directos</a>
+        <a href="https://twitter.com/El_Randes" target="_blank" rel="noopener">Twitter</a>
+      </div>
     </div>
-    <div id="history"></div>
-  </section>
-
-  <section id="estadisticas" class="page">
-    <div class="page-heading">
-      <p class="eyebrow">ESTADÍSTICAS</p>
-      <h2>Las cifras del canal</h2>
-      <p>Solo cuentan directos cuya fecha ya ha pasado. El calendario futuro no altera las estadísticas.</p>
-    </div>
-    <div id="stats"></div>
-  </section>
-</main>
-
-<footer><div class="wrap">Calendario de Twitch</div></footer>
-<script src="app.js"></script>
+  </footer>
+  <script src="app.js"></script>
 </body>
 </html>
