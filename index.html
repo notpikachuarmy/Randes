@@ -97,9 +97,13 @@
         <div><p class="eyebrow">EXTRA</p><h1>Extra</h1></div>
       </div>
 
-      <div class="extra-section">
-        <h2>Tipos de Locke</h2>
+      <div class="extra-tabs" role="tablist" aria-label="Secciones de Extra">
+        <button class="extra-tab active" data-extra="locke" role="tab">Tipos de Locke</button>
+        <button class="extra-tab" data-extra="medallas" role="tab">Medallas</button>
+        <button class="extra-tab" data-extra="minijuegos" role="tab">Minijuegos</button>
+      </div>
 
+      <div id="extra-locke" class="extra-page active">
         <article class="extra-card">
           <div class="extra-card-head">
             <div><p class="eyebrow">CARDLOCKE</p><h2>Cardlocke</h2></div>
@@ -149,8 +153,7 @@
         </article>
       </div>
 
-      <div class="extra-section">
-        <h2>Medallas</h2>
+      <div id="extra-medallas" class="extra-page">
         <article class="extra-card compact">
           <h2>Medallas de la comunidad</h2>
           <p>Las medallas son los logros de la comunidad por hitos, hazañas o referencias a cosas de la propia comunidad.</p>
@@ -159,8 +162,7 @@
         </article>
       </div>
 
-      <div class="extra-section">
-        <h2>Minijuegos de la comunidad</h2>
+      <div id="extra-minijuegos" class="extra-page">
         <article class="extra-card compact">
           <h2>R-Survivor</h2>
           <p>Una especie de Vampire Survivors con temática de la NotPikachu Army.</p>

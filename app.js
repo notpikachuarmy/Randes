@@ -14,7 +14,7 @@ const TIMEZONES=[
  ["America/Santo_Domingo","República Dominicana"],["America/Havana","Cuba"],["America/Puerto_Rico","Puerto Rico"],["Africa/Malabo","Guinea Ecuatorial"]
 ];
 
-let games=[],series=[],streams=[],selectedTZ="auto",weekOffset=0;
+let games=[],series=[],streams=[],selectedTZ="auto",weekOffset=0,selectedExtra="locke";
 
 
 function parseCSV(text){
@@ -27,6 +27,28 @@ function game(id){return games.find(x=>field(x,"ID_JUEGO")===id)||{}}
 function serie(id){return series.find(x=>field(x,"ID_SERIE")===id)||{}}
 function cleanDate(v){if(!v)return "";v=String(v).trim();let m=v.match(/^(\d{4})[-\/]([01]?\d)[-\/]([0-3]?\d)/);if(m)return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;m=v.match(/^([0-3]?\d)[-\/]([01]?\d)[-\/](\d{4})/);if(m)return `${m[3]}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`;const d=new Date(v);if(!isNaN(d))return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;return v}
 function madridToday(){return new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Madrid',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())}
+function madridDateWithOffset(date,time,hours=0){
+ const clean=cleanDate(date);
+ if(!clean||!time)return new Date(NaN);
+ const [y,m,d]=clean.split('-').map(Number);
+ const parts=String(time).match(/^(\\d{1,2}):(\\d{2})$/);
+ if(!parts)return new Date(NaN);
+ const hh=Number(parts[1]),mm=Number(parts[2]);
+ if(hh>23||mm>59)return new Date(NaN);
+ let guess=new Date(Date.UTC(y,m-1,d,hh,mm));
+ for(let i=0;i<6;i++){
+   const p=new Intl.DateTimeFormat('en-US',{
+     timeZone:'Europe/Madrid',hour12:false,year:'numeric',month:'2-digit',
+     day:'2-digit',hour:'2-digit',minute:'2-digit'
+   }).formatToParts(guess);
+   const get=k=>Number(p.find(x=>x.type===k).value);
+   const wall=Date.UTC(get('year'),get('month')-1,get('day'),get('hour')%24,get('minute'));
+   const target=Date.UTC(y,m-1,d,hh,mm);
+   guess=new Date(guess.getTime()-(wall-target));
+ }
+ guess.setTime(guess.getTime()+Number(hours||0)*3600000);
+ return guess;
+}
 function past(){
   const now = new Date();
   return streams.filter(s => {
@@ -83,6 +105,17 @@ function showSeries(id,push=true){const s=serie(id),gid=field(s,"ID_JUEGO"),g=ga
 function backCatalog(tab='juegos',push=true){document.getElementById('catalog-detail').classList.remove('active');document.getElementById('catalog-'+tab).classList.add('active');document.querySelectorAll('.catalog-btn').forEach(b=>b.classList.toggle('active',b.dataset.catalog===tab));if(push)history.pushState({page:'catalogo',tab},'',`#catalogo/${tab}`)}
 function setupCatalog(){document.querySelectorAll('.catalog-btn').forEach(b=>b.onclick=()=>{const tab=b.dataset.catalog;document.querySelectorAll('.catalog-btn').forEach(x=>x.classList.toggle('active',x===b));document.getElementById('catalog-juegos').classList.toggle('active',tab==='juegos');document.getElementById('catalog-series').classList.toggle('active',tab==='series');document.getElementById('catalog-detail').classList.remove('active');history.pushState({page:'catalogo',tab},'',`#catalogo/${tab}`)});}
 function setupTZ(){const el=document.getElementById('timezoneSelect');el.innerHTML=TIMEZONES.map(([v,l])=>`<option value="${v}">${l}</option>`).join('');el.value='auto';el.onchange=()=>{selectedTZ=el.value;renderToday();renderWeek()}}
+function showExtra(sub='locke',push=true){
+ const valid=['locke','medallas','minijuegos'];
+ if(!valid.includes(sub))sub='locke';
+ selectedExtra=sub;
+ document.querySelectorAll('.extra-tab').forEach(b=>b.classList.toggle('active',b.dataset.extra===sub));
+ document.querySelectorAll('.extra-page').forEach(p=>p.classList.toggle('active',p.id===`extra-${sub}`));
+ if(push)history.pushState({page:'extra',sub},'',`#extra/${sub}`);
+}
+function setupExtra(){
+ document.querySelectorAll('.extra-tab').forEach(b=>b.onclick=()=>showExtra(b.dataset.extra));
+}
 function showPage(page,push=true){const valid=['inicio','calendario','catalogo','extra'];if(!valid.includes(page))page='inicio';document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===page));document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===page));if(page==='calendario'){renderToday();renderWeek();renderStats()}if(page==='catalogo'){renderGames();renderSeries();document.getElementById('catalog-detail').classList.remove('active');document.getElementById('catalog-juegos').classList.add('active');document.getElementById('catalog-series').classList.remove('active');document.querySelectorAll('.catalog-btn').forEach(b=>b.classList.toggle('active',b.dataset.catalog==='juegos'));}if(push)history.pushState({page},'',`#${page}`)}
 function showSub(sub,push=true){document.querySelectorAll('.subpage').forEach(p=>p.classList.toggle('active',p.id===sub));document.querySelectorAll('.sub-btn').forEach(b=>b.classList.toggle('active',b.dataset.subpage===sub));if(push)history.pushState({page:'calendario',sub},'',`#calendario/${sub}`)}
 function setupNav(){document.querySelectorAll('.nav-btn').forEach(b=>b.onclick=()=>showPage(b.dataset.page));document.querySelector('.brand').onclick=e=>{e.preventDefault();showPage('inicio')};document.querySelectorAll('.sub-btn').forEach(b=>b.onclick=()=>showSub(b.dataset.subpage));window.addEventListener('popstate',()=>{restoreRoute(false)})}
@@ -112,9 +145,10 @@ function restoreRoute(push=false){
    }
  }else if(page==='extra'){
    showPage('extra',push);
+   showExtra(p[1]||'locke',push);
  }else{
    showPage('inicio',push);
  }
 }
-async function init(){try{[games,series,streams]=await Promise.all([loadCSV(SOURCES.games),loadCSV(SOURCES.series),loadCSV(SOURCES.streams)]);setupTZ();setupNav();setupWeek();setupCatalog();renderToday();renderWeek();renderStats();renderGames();renderSeries();restoreRoute(false)}catch(e){console.error(e);document.getElementById('today').innerHTML='<div class="empty">No se ha podido cargar el calendario.</div>'}}
+async function init(){try{[games,series,streams]=await Promise.all([loadCSV(SOURCES.games),loadCSV(SOURCES.series),loadCSV(SOURCES.streams)]);setupTZ();setupNav();setupWeek();setupCatalog();setupExtra();renderToday();renderWeek();renderStats();renderGames();renderSeries();restoreRoute(false)}catch(e){console.error(e);document.getElementById('today').innerHTML='<div class="empty">No se ha podido cargar el calendario.</div>'}}
 init();
