@@ -87,5 +87,6 @@ function restoreRoute(push=false){
  }else{
    showPage('inicio',push);
  }
+}
 async function init(){try{[games,series,streams]=await Promise.all([loadCSV(SOURCES.games),loadCSV(SOURCES.series),loadCSV(SOURCES.streams)]);setupTZ();setupNav();setupWeek();setupCatalog();renderToday();renderWeek();renderStats();renderGames();renderSeries();restoreRoute(false)}catch(e){console.error(e);document.getElementById('today').innerHTML='<div class="empty">No se ha podido cargar el calendario.</div>'}}
 init();
