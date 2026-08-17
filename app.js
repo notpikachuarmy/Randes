@@ -87,8 +87,19 @@ function madridToVisitor(dateStr,timeStr){
 }
 function gameById(id){return games.find(g=>g.ID_JUEGO===id)||{}}
 function seriesById(id){return series.find(s=>s.ID_SERIE===id)||{}}
-function streamDate(s){return s.FECHA?.slice(0,10)}
-function pastStreams(){const today=localDateString(new Date());return streams.filter(s=>streamDate(s)<today)}
+function normalizeDate(value){
+  const v=String(value||"").trim();
+  if(!v) return "";
+  // Google Sheets can export dates as DD/MM/YYYY, DD-MM-YYYY or YYYY-MM-DD.
+  let m=v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
+  if(m) return `${m[3]}-${String(m[2]).padStart(2,"0")}-${String(m[1]).padStart(2,"0")}`;
+  m=v.match(/^(\d{4})[\/.-](\d{1,2})[\/.-](\d{1,2})/);
+  if(m) return `${m[1]}-${String(m[2]).padStart(2,"0")}-${String(m[3]).padStart(2,"0")}`;
+  const d=new Date(v);
+  return Number.isNaN(d.getTime()) ? "" : `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+function streamDate(s){return normalizeDate(s.FECHA)}
+function pastStreams(){const today=localDateString(new Date());return streams.filter(s=>{const d=streamDate(s); return d && d<today})}
 function streamCard(s){
   const g=gameById(s.ID_JUEGO), se=seriesById(s.ID_SERIE), cover=g.IMAGEN_VERTICAL||"";
   const time=s.HORA_ESPAÑA ? madridToVisitor(streamDate(s),s.HORA_ESPAÑA) : "Después del primer directo";
