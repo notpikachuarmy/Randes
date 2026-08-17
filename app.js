@@ -16,6 +16,48 @@ const TIMEZONES=[
 
 let games=[],series=[],streams=[],selectedTZ="auto",weekOffset=0;
 
+
+function completedStreamsForStats(){
+  const now = new Date();
+  return streams.filter(s => {
+    const ds = streamDate(s);
+    if (!ds) return false;
+    const slot = String(s.DIRECTO || "1").trim();
+    let time = String(s.HORA_ESPAÑA || "").trim();
+
+    if (slot === "2" && !time) {
+      const first = streams.find(x =>
+        streamDate(x) === ds &&
+        String(x.DIRECTO || "").trim() === "1" &&
+        String(x.HORA_ESPAÑA || "").trim()
+      );
+      if (!first) return false;
+      time = String(first.HORA_ESPAÑA).trim();
+    }
+
+    if (!time) return false;
+    const hours = slot === "2" ? 2 : 1;
+    return madridDateWithOffset(ds, time, hours) <= now;
+  });
+}
+
+function madridDateWithOffset(dateStr,timeStr,hours){
+  const [y,m,d]=dateStr.split("-").map(Number);
+  const [hh,mm]=timeStr.split(":").map(Number);
+  let guess=new Date(Date.UTC(y,m-1,d,hh,mm));
+  for(let i=0;i<5;i++){
+    const parts=new Intl.DateTimeFormat("en-US",{
+      timeZone:"Europe/Madrid",hour12:false,year:"numeric",month:"2-digit",
+      day:"2-digit",hour:"2-digit",minute:"2-digit"
+    }).formatToParts(guess);
+    const get=k=>Number(parts.find(p=>p.type===k).value);
+    const wall=Date.UTC(get("year"),get("month")-1,get("day"),get("hour")%24,get("minute"));
+    const target=Date.UTC(y,m-1,d,hh,mm);
+    guess=new Date(guess.getTime()-(wall-target));
+  }
+  return new Date(guess.getTime()+hours*3600000);
+}
+
 function parseCSV(text){
  const rows=[];let row=[],cell="",q=false;
  for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1];if(c==='"'&&q&&n==='"'){cell+='"';i++;continue}if(c==='"'){q=!q;continue}if(c===','&&!q){row.push(cell.trim());cell="";continue}if((c==='\n'||c==='\r')&&!q){if(c==='\r'&&n==='\n')i++;row.push(cell.trim());cell="";if(row.some(v=>v!==''))rows.push(row);row=[];continue}cell+=c}if(cell||row.length){row.push(cell.trim());rows.push(row)}const headers=(rows.shift()||[]).map(h=>h.replace(/^\uFEFF/,'').trim());return rows.map(r=>Object.fromEntries(headers.map((h,i)=>[h,r[i]??""])));
