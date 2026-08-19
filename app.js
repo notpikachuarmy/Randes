@@ -4,7 +4,10 @@ const SOURCES={
  streams:"https://docs.google.com/spreadsheets/d/e/2PACX-1vTpdr4JCZEu97iQaTtfQ-3ZIBY7M66-Vmxj9_ihx9PIAnfM-bbya_LKKpFBVW7P-Q/pub?gid=1487247838&single=true&output=csv",
  medals:"https://docs.google.com/spreadsheets/d/1uxeXCUyWi2kLAWEGJjZ91zutr18sr7_QjHqxfPVzgCA/export?format=csv&gid=0",
  users:"https://docs.google.com/spreadsheets/d/1Pri9HhHGipD08e847iUKruXPLzG9tWki3N5rQPu2cMw/export?format=csv&gid=0",
- news:"https://docs.google.com/spreadsheets/d/e/2PACX-1vTo3r5CBaQRbk4Qy_QUKLsAvM4XgzNf4-PD4_ql9cehWdnrRzCPnoSdSBpeqasfISKCuUjqNPz7z5mN/pub?output=csv"
+ news:"https://docs.google.com/spreadsheets/d/e/2PACX-1vTo3r5CBaQRbk4Qy_QUKLsAvM4XgzNf4-PD4_ql9cehWdnrRzCPnoSdSBpeqasfISKCuUjqNPz7z5mN/pub?output=csv",
+ houses:"https://docs.google.com/spreadsheets/d/e/2PACX-1vRjmega_kIqVK_x3D_Z4z9ALjIMC_ClOOaN14yDvZhrCqxr3L7D9gVGdKXPTwTsQ1aQg7WlXBMkF9qW/pub?gid=0&single=true&output=csv",
+ housePoints:"https://docs.google.com/spreadsheets/d/e/2PACX-1vRjmega_kIqVK_x3D_Z4z9ALjIMC_ClOOaN14yDvZhrCqxr3L7D9gVGdKXPTwTsQ1aQg7WlXBMkF9qW/pub?gid=1852577678&single=true&output=csv",
+ houseAwards:"https://docs.google.com/spreadsheets/d/e/2PACX-1vRjmega_kIqVK_x3D_Z4z9ALjIMC_ClOOaN14yDvZhrCqxr3L7D9gVGdKXPTwTsQ1aQg7WlXBMkF9qW/pub?gid=131463405&single=true&output=csv"
 };
 
 const TIMEZONES=[
@@ -17,7 +20,7 @@ const TIMEZONES=[
  ["America/Santo_Domingo","República Dominicana"],["America/Havana","Cuba"],["America/Puerto_Rico","Puerto Rico"],["Africa/Malabo","Guinea Ecuatorial"]
 ];
 
-let games=[],series=[],streams=[],medals=[],users=[],news=[],selectedTZ="auto",weekOffset=0,selectedExtra="locke";
+let games=[],series=[],streams=[],medals=[],users=[],news=[],houses=[],housePoints=[],houseAwards=[],selectedTZ="auto",weekOffset=0,selectedExtra="locke",selectedHouse="Tototoclaw",selectedHouseMonth="";
 
 
 function parseCSV(text){
@@ -175,6 +178,101 @@ function renderHub(){
  const countdown=()=>{const el=document.getElementById('streamCountdown');if(!el)return;const diff=next.start-new Date();if(diff<=0){el.textContent='El directo debería estar comenzando ahora';return}const total=Math.floor(diff/1000),d=Math.floor(total/86400),h=Math.floor(total%86400/3600),m=Math.floor(total%3600/60),s=total%60;el.textContent=`Faltan ${d?d+'d ':''}${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;};
  countdown(); clearInterval(window.__streamCountdown); window.__streamCountdown=setInterval(countdown,1000);
 }
+function houseNameForPerson(person){
+ const p=String(person||'').trim().toLocaleLowerCase('es');
+ const row=houses.find(x=>field(x,"PERSONA").toLocaleLowerCase('es')===p);
+ return row?field(row,"CASA"):"";
+}
+function houseLogo(h){return `images/logos_casas/${escape(h)}.png`;}
+function houseList(){
+ const fromSheet=houses.map(x=>field(x,"CASA")).filter(Boolean);
+ return [...new Set([...fromSheet,"Notpikador","Hojafailpuff","Fotopierin","Tototoclaw"])];
+}
+function pointValue(r){const n=Number(String(field(r,"Puntos")).replace(',','.'));return Number.isFinite(n)?n:0;}
+function pointDate(r){return cleanDate(field(r,"Fecha"));}
+function monthKey(date){return date?String(date).slice(0,7):"";}
+function monthLabel(key){if(!key)return "Todos los meses";const [y,m]=key.split('-').map(Number);return new Intl.DateTimeFormat('es-ES',{month:'long',year:'numeric'}).format(new Date(y,m-1,15));}
+function houseStats(house, month=""){
+ const members=houses.filter(x=>field(x,"CASA")===house).map(x=>field(x,"PERSONA")).filter(Boolean);
+ const memberSet=new Set(members.map(x=>x.toLocaleLowerCase('es')));
+ const rows=housePoints.filter(r=>memberSet.has(field(r,"Estudiante").toLocaleLowerCase('es')) && (!month || monthKey(pointDate(r))===month));
+ const byStudent={};rows.forEach(r=>{const n=field(r,"Estudiante");byStudent[n]=(byStudent[n]||0)+pointValue(r)});
+ const students=Object.entries(byStudent).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'es')).map(([name,points])=>({name,points}));
+ return {house,members,total:rows.reduce((a,r)=>a+pointValue(r),0),students};
+}
+function allHouseTotals(month=""){
+ return houseList().map(h=>houseStats(h,month)).sort((a,b)=>b.total-a.total||a.house.localeCompare(b.house,'es'));
+}
+function availableHouseMonths(){
+ const keys=[...new Set(housePoints.map(r=>monthKey(pointDate(r))).filter(Boolean))].sort().reverse();
+ return keys;
+}
+function monthlyHouseWinners(){
+ const result=[];
+ availableHouseMonths().forEach(month=>{
+   const ranked=allHouseTotals(month).filter(x=>x.total>0);
+   if(ranked.length) result.push({month,house:ranked[0].house,points:ranked[0].total});
+ });
+ return result;
+}
+function houseCupCount(house){return monthlyHouseWinners().filter(x=>x.house===house).length;}
+function trophyKey(name,image){return `${name}|||${image||''}`;}
+function houseTrophies(house){
+ const monthly=monthlyHouseWinners().filter(x=>x.house===house).map(x=>({name:`Copa de la Casa · ${monthLabel(x.month)}`,image:'trofeo_casa.png',date:x.month+'-28',kind:'casa',points:x.points}));
+ const members=new Set(houses.filter(x=>field(x,"CASA")===house).map(x=>field(x,"PERSONA").toLocaleLowerCase('es')));
+ const extras=houseAwards.filter(r=>members.has(field(r,"PERSONA").toLocaleLowerCase('es')) && field(r,"TROFEO")).map(r=>({name:field(r,"TROFEO"),image:field(r,"IMAGEN TROFEO"),date:cleanDate(field(r,"FECHA")),kind:'evento',person:field(r,"PERSONA")}));
+ return [...monthly,...extras];
+}
+function trophySort(list,sort){
+ const arr=[...list];
+ if(sort==='date')return arr.sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+ if(sort==='count'){
+   const counts={};arr.forEach(t=>{counts[trophyKey(t.name,t.image)]=(counts[trophyKey(t.name,t.image)]||0)+1});
+   return arr.sort((a,b)=>(counts[trophyKey(b.name,b.image)]||0)-(counts[trophyKey(a.name,a.image)]||0)||a.name.localeCompare(b.name,'es'));
+ }
+ return arr.sort((a,b)=>a.name.localeCompare(b.name,'es')||String(b.date).localeCompare(String(a.date)));
+}
+function trophyImage(t){return t.image?`images/trofeos/${escape(t.image)}`:'images/trofeos/trofeo_casa.png';}
+function renderHouseHub(){
+ const host=document.getElementById('houseHub');if(!host)return;
+ const ranked=allHouseTotals('').slice(0,4);
+ host.innerHTML=ranked.map((x,i)=>`<div class="house-hub-row"><span class="rank-number">#${i+1}</span><img src="${houseLogo(x.house)}" onerror="this.style.visibility='hidden'" alt=""><span><strong>${escape(x.house)}</strong><small>${x.students.length?escape(x.students[0].name):'Sin puntos aún'}</small></span><b>${x.total} pts</b><em>🏆 ${houseCupCount(x.house)}</em></div>`).join('')||'<div class="empty">Aún no hay puntos.</div>';
+}
+function renderHouses(){
+ const host=document.getElementById('housesContent');if(!host)return;
+ const months=availableHouseMonths();
+ if(!selectedHouseMonth)selectedHouseMonth=months[0]||'';
+ const ranked=allHouseTotals('');
+ const current=selectedHouseMonth?allHouseTotals(selectedHouseMonth):ranked;
+ const selected=houseList().includes(selectedHouse)?selectedHouse:houseList()[0];selectedHouse=selected;
+ const stats=houseStats(selected,selectedHouseMonth);
+ const trophies=houseTrophies(selected);
+ const counts={};trophies.forEach(t=>{const k=trophyKey(t.name,t.image);counts[k]=(counts[k]||0)+1});
+ const memberRows=houseStats(selected,'').students;
+ const monthlyRows=stats.students;
+ host.innerHTML=`
+ <div class="house-intro"><div><p class="eyebrow">COPA DE LAS CASAS</p><h2>Las cuatro casas compiten durante todo el año.</h2><p>Los puntos se suman automáticamente desde la hoja. Cada mes, la casa con más puntos gana la <strong>Copa de la Casa</strong> y queda registrada en su vitrina.</p></div><div class="house-cup-total">🏆<strong>${monthlyHouseWinners().length}</strong><span>copas entregadas</span></div></div>
+ <div class="house-ranking-grid">${ranked.map((x,i)=>`<button class="house-rank-card ${x.house===selected?'active':''}" data-house="${escape(x.house)}"><span class="house-rank">#${i+1}</span><img src="${houseLogo(x.house)}" onerror="this.style.visibility='hidden'" alt="${escape(x.house)}"><span class="house-rank-name">${escape(x.house)}</span><strong>${x.total} pts</strong><small>🏆 ${houseCupCount(x.house)} copas</small></button>`).join('')}</div>
+ <div class="house-controls"><label><span>Mes</span><select id="houseMonthSelect"><option value="">Histórico total</option>${months.map(m=>`<option value="${m}" ${m===selectedHouseMonth?'selected':''}>${escape(monthLabel(m))}</option>`).join('')}</select></label><div class="house-selected-title"><img src="${houseLogo(selected)}" onerror="this.style.visibility='hidden'" alt=""><div><p class="eyebrow">CASA</p><h2>${escape(selected)}</h2></div></div></div>
+ <div class="house-detail-grid">
+  <article class="house-panel"><div class="panel-heading"><div><p class="eyebrow">PUNTUACIÓN</p><h3>${selectedHouseMonth?escape(monthLabel(selectedHouseMonth)):'Histórico total'}</h3></div><strong>${stats.total} pts</strong></div>
+   <h4>Estudiantes destacados del mes</h4>${monthlyRows.length?`<div class="house-students">${monthlyRows.slice(0,8).map((x,i)=>`<div class="house-student"><span>#${i+1}</span><b>${escape(x.name)}</b><strong>${x.points} pts</strong></div>`).join('')}</div>`:'<div class="empty">No hay puntos este mes.</div>'}
+   <h4>Total acumulado por estudiante</h4>${memberRows.length?`<div class="house-students">${memberRows.slice(0,8).map((x,i)=>`<div class="house-student"><span>#${i+1}</span><b>${escape(x.name)}</b><strong>${x.points} pts</strong></div>`).join('')}</div>`:'<div class="empty">No hay puntos registrados.</div>'}
+  </article>
+  <article class="house-panel"><div class="panel-heading"><div><p class="eyebrow">VITRINA</p><h3>Trofeos de ${escape(selected)}</h3></div><strong>🏆 ${trophies.length}</strong></div>
+   <div class="trophy-tools"><label><span>Ordenar</span><select id="trophySort"><option value="type">Tipo</option><option value="date">Fecha</option><option value="count">Cantidad de trofeo</option></select></label></div>
+   <div id="houseTrophyShelf" class="trophy-shelf"></div>
+  </article>
+ </div>
+ <article class="house-panel house-history"><div class="panel-heading"><div><p class="eyebrow">HISTORIAL</p><h3>Copas de la Casa</h3></div></div><div class="cup-history">${monthlyHouseWinners().filter(x=>x.house===selected).sort((a,b)=>b.month.localeCompare(a.month)).map(x=>`<div class="cup-history-row"><img src="images/trofeos/trofeo_casa.png" alt=""><span><b>${escape(monthLabel(x.month))}</b><small>${x.points} puntos</small></span><strong>${escape(x.house)}</strong></div>`).join('')||'<div class="empty">Esta casa todavía no ha ganado una copa.</div>'}</div></article>`;
+ const drawTrophies=(sort='type')=>{const shelf=document.getElementById('houseTrophyShelf');const arr=trophySort(trophies,sort);shelf.innerHTML=arr.length?arr.map(t=>`<div class="trophy-card"><img src="${trophyImage(t)}" onerror="this.src='images/trofeos/trofeo_casa.png'" alt=""><div><b>${escape(t.name)}</b>${t.person?`<span>Ganado por ${escape(t.person)}</span>`:''}<small>${t.kind==='casa'?'Copa mensual':'Evento'} · ${escape(t.date?fmtDate(t.date):'—')}</small></div></div>`).join(''):'<div class="empty">No hay trofeos todavía.</div>';};
+ drawTrophies();
+ document.getElementById('trophySort')?.addEventListener('change',e=>drawTrophies(e.target.value));
+ document.getElementById('houseMonthSelect')?.addEventListener('change',e=>{selectedHouseMonth=e.target.value;renderHouses()});
+ host.querySelectorAll('[data-house]').forEach(b=>b.onclick=()=>{selectedHouse=b.dataset.house;renderHouses()});
+}
+
+renderHouseHub();
 function parseMedalIds(u){return field(u,"MedallasObtenidas")?field(u,"MedallasObtenidas").split(',').map(x=>x.trim()).filter(Boolean):[]}
 function medalRanking(){
  const points={N:1,R:2,SR:3,SSR:4,UR:5};
@@ -250,7 +348,7 @@ function showExtra(sub='locke',push=true){
 function setupExtra(){
  document.querySelectorAll('.extra-tab').forEach(b=>b.onclick=()=>showExtra(b.dataset.extra));
 }
-function showPage(page,push=true){const valid=['inicio','calendario','catalogo','extra'];if(!valid.includes(page))page='inicio';document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===page));document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===page));if(page==='calendario'){renderToday();renderWeek();renderStats()}if(page==='catalogo'){renderGames();renderSeries();document.getElementById('catalog-detail').classList.remove('active');document.getElementById('catalog-juegos').classList.add('active');document.getElementById('catalog-series').classList.remove('active');document.querySelectorAll('.catalog-btn').forEach(b=>b.classList.toggle('active',b.dataset.catalog==='juegos'));}if(push)history.pushState({page},'',`#${page}`)}
+function showPage(page,push=true){const valid=['inicio','calendario','catalogo','casas','extra'];if(!valid.includes(page))page='inicio';document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===page));document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===page));if(page==='calendario'){renderToday();renderWeek();renderStats()}if(page==='casas'){renderHouses()}if(page==='catalogo'){renderGames();renderSeries();document.getElementById('catalog-detail').classList.remove('active');document.getElementById('catalog-juegos').classList.add('active');document.getElementById('catalog-series').classList.remove('active');document.querySelectorAll('.catalog-btn').forEach(b=>b.classList.toggle('active',b.dataset.catalog==='juegos'));}if(push)history.pushState({page},'',`#${page}`)}
 function showSub(sub,push=true){document.querySelectorAll('.subpage').forEach(p=>p.classList.toggle('active',p.id===sub));document.querySelectorAll('.sub-btn').forEach(b=>b.classList.toggle('active',b.dataset.subpage===sub));if(push)history.pushState({page:'calendario',sub},'',`#calendario/${sub}`)}
 function setupNav(){document.querySelectorAll('.nav-btn').forEach(b=>b.onclick=()=>showPage(b.dataset.page));document.querySelector('.brand').onclick=e=>{e.preventDefault();showPage('inicio')};document.querySelectorAll('.sub-btn').forEach(b=>b.onclick=()=>showSub(b.dataset.subpage));window.addEventListener('popstate',()=>{restoreRoute(false)})}
 function setupWeek(){document.getElementById('prevWeek').onclick=()=>{weekOffset--;renderWeek();history.pushState({page:'calendario',sub:'semana',weekOffset},'',`#calendario/semana/${weekOffset}`)};document.getElementById('nextWeek').onclick=()=>{weekOffset++;renderWeek();history.pushState({page:'calendario',sub:'semana',weekOffset},'',`#calendario/semana/${weekOffset}`)};document.getElementById('todayWeek').onclick=()=>{weekOffset=0;renderWeek();history.pushState({page:'calendario',sub:'semana',weekOffset:0},'',`#calendario/semana/0`)}}
@@ -262,6 +360,9 @@ function restoreRoute(push=false){
    showSub(p[1]==='stats'?'stats':'semana',push);
    weekOffset=p[2]?Number(p[2])||0:0;
    renderWeek();
+ }else if(page==='casas'){
+   showPage('casas',push);
+   renderHouses();
  }else if(page==='catalogo'){
    showPage('catalogo',push);
    const tab=p[1]==='series'?'series':'juegos';
@@ -286,11 +387,11 @@ function restoreRoute(push=false){
 }
 async function init(){
  try{
-   const [g,s,st,m,u]=await Promise.all([loadCSV(SOURCES.games),loadCSV(SOURCES.series),loadCSV(SOURCES.streams),loadCSV(SOURCES.medals),loadCSV(SOURCES.users)]);
-   games=g;series=s;streams=st;medals=m;users=u;
+   const [g,s,st,m,u,h,p,a]=await Promise.all([loadCSV(SOURCES.games),loadCSV(SOURCES.series),loadCSV(SOURCES.streams),loadCSV(SOURCES.medals),loadCSV(SOURCES.users),loadCSV(SOURCES.houses),loadCSV(SOURCES.housePoints),loadCSV(SOURCES.houseAwards)]);
+   games=g;series=s;streams=st;medals=m;users=u;houses=h;housePoints=p;houseAwards=a;
    if(SOURCES.news){try{news=await loadCSV(SOURCES.news)}catch(e){console.warn('Novedades no disponibles',e)}}
    setupTZ();setupNav();setupWeek();setupCatalog();setupExtra();setupHome();
-   renderHub();renderNews();renderToday();renderWeek();renderStats();renderGames();renderSeries();renderMedalRanking();restoreRoute(false);
+   renderHub();renderHouseHub();renderHouses();renderNews();renderWeek();renderStats();renderGames();renderSeries();renderMedalRanking();restoreRoute(false);
  }catch(e){console.error(e);document.getElementById('today').innerHTML='<div class="empty">No se ha podido cargar el calendario.</div>'}
 }
 init();
