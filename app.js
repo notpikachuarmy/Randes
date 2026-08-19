@@ -207,9 +207,13 @@ function availableHouseMonths(){
  const keys=[...new Set(housePoints.map(r=>monthKey(pointDate(r))).filter(Boolean))].sort().reverse();
  return keys;
 }
+function finalizedHouseMonths(){
+ const currentMonth=monthKey(madridToday());
+ return availableHouseMonths().filter(month=>month<currentMonth);
+}
 function monthlyHouseWinners(){
  const result=[];
- availableHouseMonths().forEach(month=>{
+ finalizedHouseMonths().forEach(month=>{
    const ranked=allHouseTotals(month).filter(x=>x.total>0);
    if(ranked.length) result.push({month,house:ranked[0].house,points:ranked[0].total});
  });
@@ -236,7 +240,7 @@ function trophyImage(t){return t.image?`images/trofeos/${escape(t.image)}`:'imag
 function renderHouseHub(){
  const host=document.getElementById('houseHub');if(!host)return;
  const ranked=allHouseTotals('').slice(0,4);
- host.innerHTML=ranked.map((x,i)=>`<div class="house-hub-row"><span class="rank-number">#${i+1}</span><img src="${houseLogo(x.house)}" onerror="this.style.visibility='hidden'" alt=""><span><strong>${escape(x.house)}</strong><small>${x.students.length?escape(x.students[0].name):'Sin puntos aún'}</small></span><b>${x.total} pts</b><em>🏆 ${houseCupCount(x.house)}</em></div>`).join('')||'<div class="empty">Aún no hay puntos.</div>';
+ host.innerHTML=ranked.map((x,i)=>`<div class="house-hub-row"><span class="rank-number">#${i+1}</span><img src="${houseLogo(x.house)}" onerror="this.style.visibility='hidden'" alt=""><span><strong>${escape(x.house)}</strong><small>${x.students.length?escape(x.students[0].name):'Sin puntos aún'}</small></span><b>${x.total} pts</b></div>`).join('')||'<div class="empty">Aún no hay puntos.</div>';
 }
 function renderHouses(){
  const host=document.getElementById('housesContent');if(!host)return;
@@ -251,23 +255,35 @@ function renderHouses(){
  const memberRows=houseStats(selected,'').students;
  const monthlyRows=stats.students;
  host.innerHTML=`
- <div class="house-intro"><div><p class="eyebrow">COPA DE LAS CASAS</p><h2>Las cuatro casas compiten durante todo el año.</h2><p>Los puntos se suman automáticamente desde la hoja. Cada mes, la casa con más puntos gana la <strong>Copa de la Casa</strong> y queda registrada en su vitrina.</p></div><div class="house-cup-total">🏆<strong>${monthlyHouseWinners().length}</strong><span>copas entregadas</span></div></div>
+ <div class="house-intro"><div><p class="eyebrow">COPA DE LAS CASAS</p><h2>Las cuatro casas compiten durante todo el año.</h2><p>Los puntos se suman automáticamente desde la hoja. Cada mes, la casa con más puntos gana la <strong>Copa de la Casa</strong> y queda registrada en su vitrina. Además, pueden organizarse eventos especiales que otorguen otros tipos de copas o trofeos, que también pasarán a formar parte del historial y la vitrina.</p></div><div class="house-cup-total">🏆<strong>${monthlyHouseWinners().length}</strong><span>copas de casa entregadas</span></div></div>
  <div class="house-ranking-grid">${ranked.map((x,i)=>`<button class="house-rank-card ${x.house===selected?'active':''}" data-house="${escape(x.house)}"><span class="house-rank">#${i+1}</span><img src="${houseLogo(x.house)}" onerror="this.style.visibility='hidden'" alt="${escape(x.house)}"><span class="house-rank-name">${escape(x.house)}</span><strong>${x.total} pts</strong><small>🏆 ${houseCupCount(x.house)} copas</small></button>`).join('')}</div>
  <div class="house-controls"><label><span>Mes</span><select id="houseMonthSelect"><option value="">Histórico total</option>${months.map(m=>`<option value="${m}" ${m===selectedHouseMonth?'selected':''}>${escape(monthLabel(m))}</option>`).join('')}</select></label><div class="house-selected-title"><img src="${houseLogo(selected)}" onerror="this.style.visibility='hidden'" alt=""><div><p class="eyebrow">CASA</p><h2>${escape(selected)}</h2></div></div></div>
- <div class="house-detail-grid">
-  <article class="house-panel"><div class="panel-heading"><div><p class="eyebrow">PUNTUACIÓN</p><h3>${selectedHouseMonth?escape(monthLabel(selectedHouseMonth)):'Histórico total'}</h3></div><strong>${stats.total} pts</strong></div>
+ <div class="house-view-tabs" role="tablist" aria-label="Vista de la casa">
+  <button class="house-view-tab active" data-house-view="score" type="button">Puntuación</button>
+  <button class="house-view-tab" data-house-view="showcase" type="button">Vitrina</button>
+ </div>
+ <div class="house-detail-single">
+  <article id="houseScorePanel" class="house-panel house-view-panel active">
+   <div class="panel-heading"><div><p class="eyebrow">PUNTUACIÓN</p><h3>${selectedHouseMonth?escape(monthLabel(selectedHouseMonth)):'Histórico total'}</h3></div><div class="score-summary"><strong>${stats.total} pts</strong><span>🏆 ${trophies.length} trofeos totales</span></div></div>
    <h4>Estudiantes destacados del mes</h4>${monthlyRows.length?`<div class="house-students">${monthlyRows.slice(0,8).map((x,i)=>`<div class="house-student"><span>#${i+1}</span><b>${escape(x.name)}</b><strong>${x.points} pts</strong></div>`).join('')}</div>`:'<div class="empty">No hay puntos este mes.</div>'}
    <h4>Total acumulado por estudiante</h4>${memberRows.length?`<div class="house-students">${memberRows.slice(0,8).map((x,i)=>`<div class="house-student"><span>#${i+1}</span><b>${escape(x.name)}</b><strong>${x.points} pts</strong></div>`).join('')}</div>`:'<div class="empty">No hay puntos registrados.</div>'}
   </article>
-  <article class="house-panel"><div class="panel-heading"><div><p class="eyebrow">VITRINA</p><h3>Trofeos de ${escape(selected)}</h3></div><strong>🏆 ${trophies.length}</strong></div>
+  <article id="houseShowcasePanel" class="house-panel house-view-panel">
+   <div class="panel-heading"><div><p class="eyebrow">VITRINA</p><h3>Trofeos de ${escape(selected)}</h3></div><strong>🏆 ${trophies.length}</strong></div>
    <div class="trophy-tools"><label><span>Ordenar</span><select id="trophySort"><option value="type">Tipo</option><option value="date">Fecha</option><option value="count">Cantidad de trofeo</option></select></label></div>
    <div id="houseTrophyShelf" class="trophy-shelf"></div>
   </article>
  </div>
- <article class="house-panel house-history"><div class="panel-heading"><div><p class="eyebrow">HISTORIAL</p><h3>Copas de la Casa</h3></div></div><div class="cup-history">${monthlyHouseWinners().filter(x=>x.house===selected).sort((a,b)=>b.month.localeCompare(a.month)).map(x=>`<div class="cup-history-row"><img src="images/trofeos/trofeo_casa.png" alt=""><span><b>${escape(monthLabel(x.month))}</b><small>${x.points} puntos</small></span><strong>${escape(x.house)}</strong></div>`).join('')||'<div class="empty">Esta casa todavía no ha ganado una copa.</div>'}</div></article>`;
+ <article class="house-panel house-history"><div class="panel-heading"><div><p class="eyebrow">HISTORIAL</p><h3>Historial de trofeos</h3></div><strong>🏆 ${trophies.length}</strong></div><div class="cup-history">${trophySort(trophies,'date').map(t=>`<div class="cup-history-row"><img src="${trophyImage(t)}" onerror="this.src='images/trofeos/trofeo_casa.png'" alt=""><span><b>${escape(t.name)}</b><small>${t.person?`Ganado por ${escape(t.person)} · `:''}${escape(t.date?fmtDate(t.date):'—')}</small></span><strong>${t.kind==='casa'?'Copa de la Casa':'Copa/Trofeo de evento'}</strong></div>`).join('')||'<div class="empty">Esta casa todavía no tiene trofeos registrados.</div>'}</div></article>`;
  const drawTrophies=(sort='type')=>{const shelf=document.getElementById('houseTrophyShelf');const arr=trophySort(trophies,sort);shelf.innerHTML=arr.length?arr.map(t=>`<div class="trophy-card"><img src="${trophyImage(t)}" onerror="this.src='images/trofeos/trofeo_casa.png'" alt=""><div><b>${escape(t.name)}</b>${t.person?`<span>Ganado por ${escape(t.person)}</span>`:''}<small>${t.kind==='casa'?'Copa mensual':'Evento'} · ${escape(t.date?fmtDate(t.date):'—')}</small></div></div>`).join(''):'<div class="empty">No hay trofeos todavía.</div>';};
  drawTrophies();
  document.getElementById('trophySort')?.addEventListener('change',e=>drawTrophies(e.target.value));
+ host.querySelectorAll('[data-house-view]').forEach(btn=>btn.onclick=()=>{
+   const view=btn.dataset.houseView;
+   host.querySelectorAll('[data-house-view]').forEach(x=>x.classList.toggle('active',x===btn));
+   document.getElementById('houseScorePanel')?.classList.toggle('active',view==='score');
+   document.getElementById('houseShowcasePanel')?.classList.toggle('active',view==='showcase');
+ });
  document.getElementById('houseMonthSelect')?.addEventListener('change',e=>{selectedHouseMonth=e.target.value;renderHouses()});
  host.querySelectorAll('[data-house]').forEach(b=>b.onclick=()=>{selectedHouse=b.dataset.house;renderHouses()});
 }

@@ -31,14 +31,17 @@
 
   <main class="wrap">
     <section id="inicio" class="page active">
-      <div class="intro">
+      <div class="intro home-intro">
         <p class="eyebrow">BIENVENIDO</p>
         <h1>NotPikachu Army</h1>
         <p>La NotPikachu army, es la comunidad de Randes. Bienvenido a la familia.</p>
+      </div>
 
+      <section class="home-section home-countdown-section">
         <div id="hubStatus" class="hub-status"></div>
-        <div class="hub-houses"><div class="section-heading compact-heading"><div><p class="eyebrow">COPA DE LAS CASAS</p><h3>Clasificación</h3></div><button class="text-btn" data-go="casas">Ver casas</button></div><div id="houseHub" class="house-hub"><div class="empty">Cargando…</div></div></div>
+      </section>
 
+      <section class="home-section home-links-section">
         <div class="quick-links">
           <button class="quick-link" data-go="calendario">📅 Calendario</button>
           <button class="quick-link" data-go="catalogo">🎮 Gameplays</button>
@@ -46,9 +49,9 @@
           <button class="quick-link" data-go="extra/medallas">🏅 Medallas</button>
           <a class="quick-link external" href="https://www.twitch.tv/elrandes" target="_blank" rel="noopener">📺 Ver Twitch</a>
         </div>
-      </div>
+      </section>
 
-      <section class="home-section">
+      <section class="home-section home-news-section">
         <div class="section-heading">
           <div><p class="eyebrow">ACTUALIDAD</p><h2>Novedades</h2></div>
           <button id="refreshNews" class="text-btn" type="button">Actualizar</button>
@@ -56,6 +59,14 @@
         <div id="newsList" class="news-list news-scroll">
           <div class="empty">Cargando novedades…</div>
         </div>
+      </section>
+
+      <section class="home-section home-ranking-section">
+        <div class="section-heading">
+          <div><p class="eyebrow">COPA DE LAS CASAS</p><h2>Clasificación</h2></div>
+          <button class="text-btn" data-go="casas">Ver casas</button>
+        </div>
+        <div id="houseHub" class="house-hub"><div class="empty">Cargando…</div></div>
       </section>
     </section>
 
