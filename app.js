@@ -4,9 +4,7 @@ const SOURCES={
  streams:"https://docs.google.com/spreadsheets/d/e/2PACX-1vTpdr4JCZEu97iQaTtfQ-3ZIBY7M66-Vmxj9_ihx9PIAnfM-bbya_LKKpFBVW7P-Q/pub?gid=1487247838&single=true&output=csv",
  medals:"https://docs.google.com/spreadsheets/d/1uxeXCUyWi2kLAWEGJjZ91zutr18sr7_QjHqxfPVzgCA/export?format=csv&gid=0",
  users:"https://docs.google.com/spreadsheets/d/1Pri9HhHGipD08e847iUKruXPLzG9tWki3N5rQPu2cMw/export?format=csv&gid=0",
- // Pega aquí, una sola vez, el CSV publicado de la hoja de Novedades.
- // Columnas: FECHA | TIPO | TITULO | DESCRIPCION | ENLACE (ENLACE opcional)
- news:""
+ news:"https://docs.google.com/spreadsheets/d/e/2PACX-1vTo3r5CBaQRbk4Qy_QUKLsAvM4XgzNf4-PD4_ql9cehWdnrRzCPnoSdSBpeqasfISKCuUjqNPz7z5mN/pub?output=csv"
 };
 
 const TIMEZONES=[
