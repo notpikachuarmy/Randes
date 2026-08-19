@@ -34,7 +34,26 @@
         <p class="eyebrow">BIENVENIDO</p>
         <h1>NotPikachu Army</h1>
         <p>La NotPikachu army, es la comunidad de Randes. Bienvenido a la familia.</p>
+
+        <div id="hubStatus" class="hub-status"></div>
+
+        <div class="quick-links">
+          <button class="quick-link" data-go="calendario">📅 Calendario</button>
+          <button class="quick-link" data-go="catalogo">🎮 Gameplays</button>
+          <button class="quick-link" data-go="extra/medallas">🏅 Medallas</button>
+          <a class="quick-link external" href="https://www.twitch.tv/elrandes" target="_blank" rel="noopener">📺 Ver Twitch</a>
+        </div>
       </div>
+
+      <section class="home-section">
+        <div class="section-heading">
+          <div><p class="eyebrow">ACTUALIDAD</p><h2>Novedades</h2></div>
+          <button id="refreshNews" class="text-btn" type="button">Actualizar</button>
+        </div>
+        <div id="newsList" class="news-list">
+          <div class="empty">Cargando novedades…</div>
+        </div>
+      </section>
     </section>
 
     <section id="calendario" class="page">
@@ -81,6 +100,21 @@
       <div class="catalog-tabs">
         <button class="catalog-btn active" data-catalog="juegos">Juegos</button>
         <button class="catalog-btn" data-catalog="series">Series</button>
+      </div>
+
+      <div class="catalog-tools">
+        <input id="catalogSearch" type="search" placeholder="Buscar juego o serie..." autocomplete="off">
+        <label>
+          <span>Ordenar por</span>
+          <select id="catalogSort">
+            <option value="recent">Último directo más reciente</option>
+            <option value="oldest">Último directo más antiguo</option>
+            <option value="az">Nombre A-Z</option>
+            <option value="za">Nombre Z-A</option>
+            <option value="most">Más directos</option>
+            <option value="least">Menos directos</option>
+          </select>
+        </label>
       </div>
 
       <div id="catalog-juegos" class="catalog-page active">
@@ -158,6 +192,13 @@
           <p>Las medallas son los logros de la comunidad por hitos, hazañas o referencias a cosas de la propia comunidad.</p>
           <p>Se solicitan en Discord.</p>
           <a class="extra-link" href="https://notpikachuarmy.github.io/Medallas/" target="_blank" rel="noopener">Ver Medallas</a>
+          <div class="community-ranking">
+            <div class="section-heading compact-heading">
+              <div><p class="eyebrow">COMUNIDAD</p><h3>Ranking de medallas</h3></div>
+              <a class="text-btn" href="https://notpikachuarmy.github.io/Medallas/" target="_blank" rel="noopener">Ver completo</a>
+            </div>
+            <div id="medalRanking" class="medal-ranking"><div class="empty">Cargando ranking…</div></div>
+          </div>
         </article>
       </div>
 
