@@ -52,53 +52,44 @@ function madridDateWithOffset(date,time,hours=0){
  guess.setTime(guess.getTime()+Number(hours||0)*3600000);
  return guess;
 }
+function directNumber(s, fallback=9999){
+ const n=parseInt(String(field(s,"DIRECTO")).match(/\d+/)?.[0]||"",10);
+ return Number.isFinite(n)?n:fallback;
+}
+function scheduledDay(date, dayStreams){
+ const ordered=dayStreams.map((s,index)=>({s,index})).sort((a,b)=>directNumber(a.s)-directNumber(b.s)||a.index-b.index);
+ // La hora que manda es la del primer directo. A partir de ahí, cada
+ // directo siguiente empieza exactamente 1 hora después. Si por algún
+ // motivo el primero no tiene hora, usamos una hora disponible como ancla.
+ const anchor=ordered.find(x=>String(field(x.s,"HORA_ESPAÑA")||"").trim());
+ if(!anchor)return [];
+ const anchorTime=String(field(anchor.s,"HORA_ESPAÑA")).trim();
+ const anchorNum=directNumber(anchor.s,1);
+ return ordered.map(({s})=>{
+   const n=directNumber(s,anchorNum);
+   const offset=n-anchorNum;
+   const start=madridDateWithOffset(date,anchorTime,offset);
+   if(isNaN(start.getTime()))return null;
+   const displayTime=new Intl.DateTimeFormat('es-ES',{timeZone:tz(),hour:'2-digit',minute:'2-digit',hour12:false}).format(start);
+   return {s,start,displayTime};
+ }).filter(Boolean);
+}
 function past(){
-  const now = new Date();
-  const byDate = {};
-
-  // Cada directo se evalúa por separado. El segundo (y siguientes) no
-  // dependen de que cambie el día: se calculan a partir del primero
-  // que tenga una hora válida.
-  streams.forEach(s => {
-    const date = cleanDate(field(s,"FECHA"));
-    if(!date) return;
-    (byDate[date] ||= []).push(s);
-  });
-
-  const result = [];
-
-  Object.entries(byDate).forEach(([date, dayStreams]) => {
-    // Ordenamos por número de directo. Si no existe, conservamos el orden
-    // de la hoja como desempate.
-    const ordered = dayStreams.map((s,index)=>({s,index})).sort((a,b)=>{
-      const na = parseInt(String(field(a.s,"DIRECTO")).match(/\d+/)?.[0] || "9999",10);
-      const nb = parseInt(String(field(b.s,"DIRECTO")).match(/\d+/)?.[0] || "9999",10);
-      return na-nb || a.index-b.index;
-    }).map(x=>x.s);
-
-    const firstWithTime = ordered.find(s => String(field(s,"HORA_ESPAÑA")||"").trim());
-    const firstTime = firstWithTime ? String(field(firstWithTime,"HORA_ESPAÑA")).trim() : "";
-
-    ordered.forEach((s,index)=>{
-      let time = String(field(s,"HORA_ESPAÑA")||"").trim();
-
-      // Si un directo no tiene hora propia, usamos la del primero del día.
-      if(!time) time = firstTime;
-      if(!time) return;
-
-      // Un directo con hora propia termina/cuenta una hora después.
-      // Los siguientes sin hora propia terminan según su posición:
-      // 1.º = +1h, 2.º = +2h, 3.º = +3h, etc.
-      const hours = String(field(s,"HORA_ESPAÑA")||"").trim()
-        ? 1
-        : index + 1;
-
-      const end = madridDateWithOffset(date,time,hours);
-      if(!isNaN(end.getTime()) && end <= now) result.push(s);
-    });
-  });
-
-  return result;
+ const now=new Date(),byDate={};
+ streams.forEach((s,index)=>{
+   const date=cleanDate(field(s,"FECHA"));
+   if(!date)return;
+   (byDate[date] ||= []).push(s);
+ });
+ const result=[];
+ Object.entries(byDate).forEach(([date,dayStreams])=>{
+   scheduledDay(date,dayStreams).forEach(({s,start})=>{
+     // Consideramos completado cada directo una hora después de su inicio.
+     const end=new Date(start.getTime()+3600000);
+     if(end<=now)result.push(s);
+   });
+ });
+ return result;
 }
 function tz(){return selectedTZ==='auto'?Intl.DateTimeFormat().resolvedOptions().timeZone:selectedTZ}
 function madridToVisitor(date,time){
@@ -115,8 +106,15 @@ function gameImage(g){return field(g,"IMAGEN_VERTICAL")}
 function seriesName(s,id){return field(s,"NOMBRE_SERIE")||id}
 function seriesLink(s){return field(s,"ENLACE")||field(s,"Enlace")}
 function streamData(s){const gid=field(s,"ID_JUEGO"),sid=field(s,"ID_SERIE"),g=game(gid),se=serie(sid);return {gid,sid,g,se,time:madridToVisitor(field(s,"FECHA"),field(s,"HORA_ESPAÑA"))}}
-function streamCard(s){const {g,se,time}=streamData(s);return `<article class="stream-card"><img class="cover" src="images/${escape(gameImage(g))}" onerror="this.style.visibility='hidden'"><div class="stream-info"><div class="type">${field(s,"DIRECTO")==='1'?'Primer directo':'Segundo directo'}</div><div class="time">${escape(time)}</div><h2>${escape(gameName(g,field(s,"ID_JUEGO")))}</h2><p class="series-name">${escape(seriesName(se,field(s,"ID_SERIE")))}</p></div></article>`}
-function miniStream(s){const {g,se,time}=streamData(s);return `<article class="mini-stream"><img src="images/${escape(gameImage(g))}" onerror="this.style.visibility='hidden'"><div class="mini-time">${escape(time)}</div><h3>${escape(gameName(g,field(s,"ID_JUEGO")))}</h3><div class="mini-series">${escape(seriesName(se,field(s,"ID_SERIE")))}</div></article>`}
+function scheduledDisplayTime(s){
+ const date=cleanDate(field(s,"FECHA"));
+ if(!date)return "Después del primero";
+ const dayStreams=streams.filter(x=>cleanDate(field(x,"FECHA"))===date);
+ const item=scheduledDay(date,dayStreams).find(x=>x.s===s);
+ return item?item.displayTime:"Después del primero";
+}
+function streamCard(s){const {g,se}=streamData(s);const time=scheduledDisplayTime(s);return `<article class="stream-card"><img class="cover" src="images/${escape(gameImage(g))}" onerror="this.style.visibility='hidden'"><div class="stream-info"><div class="type">${field(s,"DIRECTO")==='1'?'Primer directo':'Segundo directo'}</div><div class="time">${escape(time)}</div><h2>${escape(gameName(g,field(s,"ID_JUEGO")))}</h2><p class="series-name">${escape(seriesName(se,field(s,"ID_SERIE")))}</p></div></article>`}
+function miniStream(s){const {g,se}=streamData(s);const time=scheduledDisplayTime(s);return `<article class="mini-stream"><img src="images/${escape(gameImage(g))}" onerror="this.style.visibility='hidden'"><div class="mini-time">${escape(time)}</div><h3>${escape(gameName(g,field(s,"ID_JUEGO")))}</h3><div class="mini-series">${escape(seriesName(se,field(s,"ID_SERIE")))}</div></article>`}
 
 function dateFromRow(s){const d=cleanDate(field(s,"FECHA"));return d?new Date(`${d}T00:00:00`):new Date(0)}
 function completedStreamsFor(predicate){return past().filter(predicate)}
@@ -126,21 +124,27 @@ function streamDatesFor(predicate){
 }
 function fmtDate(v){if(!v)return "—";const d=new Date(`${cleanDate(v)}T12:00:00`);return new Intl.DateTimeFormat('es-ES',{day:'2-digit',month:'long',year:'numeric'}).format(d)}
 function currentOrNextStream(){
- const now=new Date();
- const scheduled=streams.map(s=>{
-   const date=cleanDate(field(s,"FECHA")),time=field(s,"HORA_ESPAÑA");
-   const start=madridDateWithOffset(date,time||"00:00");
-   return {...streamData(s),row:s,start,date};
- }).filter(x=>!isNaN(x.start.getTime())).sort((a,b)=>a.start-b.start);
- const next=scheduled.find(x=>x.start>now);
- // Sin una API de Twitch no afirmamos que está en directo: mostramos el siguiente directo programado.
- return next||null;
+ const now=new Date(),byDate={};
+ streams.forEach((s,index)=>{
+   const date=cleanDate(field(s,"FECHA"));
+   if(!date)return;
+   (byDate[date] ||= []).push(s);
+ });
+ const scheduled=[];
+ Object.entries(byDate).forEach(([date,dayStreams])=>{
+   scheduledDay(date,dayStreams).forEach(({s,start,displayTime})=>{
+     const {gid,sid,g,se}=streamData(s);
+     scheduled.push({gid,sid,g,se,row:s,start,date,time:displayTime});
+   });
+ });
+ scheduled.sort((a,b)=>a.start-b.start);
+ return scheduled.find(x=>x.start>now)||null;
 }
 function renderHub(){
  const box=document.getElementById('hubStatus'); if(!box)return;
  const next=currentOrNextStream();
  if(!next){box.innerHTML='<div class="hub-card"><div class="hub-label">ESTADO</div><h2>⚫ Sin próximos directos programados</h2><p>Cuando haya una nueva fecha en el calendario aparecerá aquí.</p></div>';return}
- const date=cleanDate(field(next.row,"FECHA")), time=madridToVisitor(date,field(next.row,"HORA_ESPAÑA"));
+ const date=cleanDate(field(next.row,"FECHA")), time=next.time;
  box.innerHTML=`<div class="hub-card"><div class="hub-label">PRÓXIMO DIRECTO</div><h2>🟢 ${escape(gameName(next.g,next.gid))}</h2><p>${escape(seriesName(next.se,next.sid))} · ${escape(fmtDate(date))} · ${escape(time)}</p><div class="countdown" id="streamCountdown">Calculando…</div></div>`;
  const countdown=()=>{const el=document.getElementById('streamCountdown');if(!el)return;const diff=next.start-new Date();if(diff<=0){el.textContent='El directo debería estar comenzando ahora';return}const total=Math.floor(diff/1000),d=Math.floor(total/86400),h=Math.floor(total%86400/3600),m=Math.floor(total%3600/60),s=total%60;el.textContent=`Faltan ${d?d+'d ':''}${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;};
  countdown(); clearInterval(window.__hubCountdown); window.__hubCountdown=setInterval(countdown,1000);
