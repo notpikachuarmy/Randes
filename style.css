@@ -131,3 +131,27 @@ footer{border-top:1px solid #292932;padding:22px 0;color:#777}.footer-inner{disp
  .ficha-history-row .ficha-history-movement{grid-row:span 2}
  .ficha-history-image{width:44px;height:44px}
 }
+
+/* ===== FICHAS · INFORMACIÓN / REGLAS ===== */
+.fichas-info-tabs{display:flex;gap:8px;margin:0 0 18px;border-bottom:1px solid #292932;padding-bottom:10px}
+.fichas-info-tab{border:1px solid #34343e;background:#17171e;color:#ddd;border-radius:10px;padding:9px 15px;cursor:pointer;font-weight:700}
+.fichas-info-tab.active,.fichas-info-tab:hover{background:#2a2a33;color:#fff}
+.fichas-info-page{display:none}
+.fichas-info-page.active{display:block}
+.ficha-rules-card{background:#17171e;border:1px solid #2d2d37;border-radius:16px;padding:24px}
+.ficha-rules-section+.ficha-rules-section{margin-top:30px;padding-top:26px;border-top:1px solid #2b2b34}
+.ficha-rules-section h2{margin:0 0 14px;font-size:1.35rem}
+.ficha-rules-section>p:not(.eyebrow){color:#c3c3cc;line-height:1.6}
+.ficha-rules-list{margin:0;padding-left:25px;color:#d4d4d8}
+.ficha-rules-list li{padding-left:5px;margin:0 0 18px}
+.ficha-rules-list li:last-child{margin-bottom:0}
+.ficha-rules-list li::marker{font-weight:800;color:#aaa}
+.ficha-rules-list p{margin:6px 0 0;color:#c3c3cc;line-height:1.6}
+.ficha-example-label{margin-bottom:12px!important}
+.ficha-example-image{display:flex;justify-content:flex-start;overflow-x:auto}
+.ficha-example-image img{display:block;width:min(461px,100%);height:auto;border:1px solid #30303a;border-radius:10px;background:#101016}
+@media(max-width:620px){
+ .fichas-info-tabs{overflow-x:auto}
+ .fichas-info-tab{white-space:nowrap}
+ .ficha-rules-card{padding:18px}
+}

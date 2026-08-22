@@ -21,7 +21,7 @@ const TIMEZONES=[
  ["America/Santo_Domingo","República Dominicana"],["America/Havana","Cuba"],["America/Puerto_Rico","Puerto Rico"],["Africa/Malabo","Guinea Ecuatorial"]
 ];
 
-let games=[],series=[],streams=[],medals=[],users=[],news=[],houses=[],housePoints=[],houseAwards=[],fichas=[],selectedTZ="auto",weekOffset=0,selectedExtra="locke",selectedHouse="Tototoclaw",selectedHouseMonth="",selectedFichasTab="info",selectedFichasMonth="";
+let games=[],series=[],streams=[],medals=[],users=[],news=[],houses=[],housePoints=[],houseAwards=[],fichas=[],selectedTZ="auto",weekOffset=0,selectedExtra="locke",selectedHouse="Tototoclaw",selectedHouseMonth="",selectedFichasTab="info",selectedFichasInfoTab="fichas",selectedFichasMonth="";
 
 
 function parseCSV(text){
@@ -405,11 +405,39 @@ function fichaImage(name){
 }
 function renderFichasInfo(){
  const el=document.getElementById('fichasInfoContent');if(!el)return;
- el.innerHTML=FICHAS_INFO.map(f=>{
-   const songs=f.name==='Himno del chat'?Object.entries(FICHA_SONGS).map(([g,arr])=>`<details class="ficha-details"><summary>${escape(g)} <span>${arr.length} canciones</span></summary><ul>${arr.map(x=>`<li>${escape(x)}</li>`).join('')}</ul></details>`).join(''):'';
-   const tots=f.name==='Tototo Star'?`<details class="ficha-details tototo-details"><summary>Lista de Tototos disponibles <span>${TOTOTOS.length} Tototos</span></summary><div class="tototo-grid">${TOTOTOS.map(t=>`<figure class="tototo-card"><img src="${t.url}" alt="${escape(t.name)}" loading="lazy"><figcaption>${escape(t.name)}</figcaption></figure>`).join('')}</div></details>`:'';
-   return `<article class="ficha-card"><div class="ficha-card-head"><img class="ficha-image" src="images/fichas/${encodeURIComponent(f.image).replace(/%2F/g,'/')}" alt="${escape(f.name)}"><div><h2>${escape(f.name)}</h2></div></div><p>${escape(f.description)}</p>${songs}${tots}</article>`;
- }).join('');
+ el.innerHTML=`
+   <div class="fichas-info-tabs" role="tablist" aria-label="Información de fichas">
+     <button class="fichas-info-tab ${selectedFichasInfoTab==='fichas'?'active':''}" data-fichas-info="fichas" role="tab">Fichas</button>
+     <button class="fichas-info-tab ${selectedFichasInfoTab==='reglas'?'active':''}" data-fichas-info="reglas" role="tab">Reglas</button>
+   </div>
+   <div id="fichas-info-fichas" class="fichas-info-page ${selectedFichasInfoTab==='fichas'?'active':''}">
+     ${FICHAS_INFO.map(f=>{
+       const songs=f.name==='Himno del chat'?Object.entries(FICHA_SONGS).map(([g,arr])=>`<details class="ficha-details"><summary>${escape(g)} <span>${arr.length} canciones</span></summary><ul>${arr.map(x=>`<li>${escape(x)}</li>`).join('')}</ul></details>`).join(''):'';
+       const tots=f.name==='Tototo Star'?`<details class="ficha-details tototo-details"><summary>Lista de Tototos disponibles <span>${TOTOTOS.length} Tototos</span></summary><div class="tototo-grid">${TOTOTOS.map(t=>`<figure class="tototo-card"><img src="${t.url}" alt="${escape(t.name)}" loading="lazy"><figcaption>${escape(t.name)}</figcaption></figure>`).join('')}</div></details>`:'';
+       return `<article class="ficha-card"><div class="ficha-card-head"><img class="ficha-image" src="images/fichas/${encodeURIComponent(f.image).replace(/%2F/g,'/')}" alt="${escape(f.name)}"><div><h2>${escape(f.name)}</h2></div></div><p>${escape(f.description)}</p>${songs}${tots}</article>`;
+     }).join('')}
+   </div>
+   <div id="fichas-info-reglas" class="fichas-info-page ${selectedFichasInfoTab==='reglas'?'active':''}">
+     <article class="ficha-rules-card">
+       <div class="ficha-rules-section">
+         <p class="eyebrow">REGLAS</p>
+         <h2>Reglas de las fichas</h2>
+         <ol class="ficha-rules-list">
+           <li><strong>Regla número 1</strong><p>Cada persona solo podrá usar una ficha por directo.</p></li>
+           <li><strong>Regla número 2</strong><p>Solo se podrá usar una copia de cada ficha por directo, aunque las usen personas diferentes.</p></li>
+           <li><strong>Regla número 3</strong><p>Solo se repartirán en los directos de <strong>pokémon</strong> o si <strong>llegamos a 20 espectadores</strong> en directo. (la cifra subirá cuantos más seamos) o si a Randes le apetece.</p></li>
+         </ol>
+       </div>
+       <div class="ficha-rules-section">
+         <p class="eyebrow">USO</p>
+         <h2>¿Cómo se usa una ficha?</h2>
+         <p>Para usar una ficha lo único que tendrás que decir es <strong>ACTIVO MI FICHA (nombre de ficha)</strong></p>
+         <p class="ficha-example-label"><strong>Ejemplo:</strong></p>
+         <div class="ficha-example-image"><img src="images/fichas/ejemplouso.png" alt="Ejemplo de cómo activar una ficha" loading="lazy"></div>
+       </div>
+     </article>
+   </div>`;
+ setupFichasInfoTabs();
 }
 function renderFichasUsers(){
  const el=document.getElementById('fichasUsersContent');if(!el)return;
@@ -449,6 +477,13 @@ function renderFichasHistory(){
    }).join('')||'<div class="empty">No hay movimientos en este mes.</div>'
  };
  document.getElementById('fichaHistoryMonth').onchange=draw;draw()
+}
+function setupFichasInfoTabs(){
+ document.querySelectorAll('.fichas-info-tab').forEach(b=>b.onclick=()=>{
+   selectedFichasInfoTab=b.dataset.fichasInfo;
+   document.querySelectorAll('.fichas-info-tab').forEach(x=>x.classList.toggle('active',x.dataset.fichasInfo===selectedFichasInfoTab));
+   document.querySelectorAll('.fichas-info-page').forEach(p=>p.classList.toggle('active',p.id===`fichas-info-${selectedFichasInfoTab}`));
+ });
 }
 function renderFichas(){renderFichasInfo();renderFichasUsers();renderFichasStats();renderFichasHistory()}
 function showFichasTab(tab='info',push=true){const valid=['info','usuarios','estadisticas','historial'];if(!valid.includes(tab))tab='info';selectedFichasTab=tab;document.querySelectorAll('.fichas-tab').forEach(b=>b.classList.toggle('active',b.dataset.fichas===tab));document.querySelectorAll('.fichas-page').forEach(p=>p.classList.toggle('active',p.id===`fichas-${tab}`));if(push)history.pushState({page:'fichas',sub:tab},'',`#fichas/${tab}`)}
