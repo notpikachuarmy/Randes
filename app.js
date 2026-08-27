@@ -28,7 +28,32 @@ function parseCSV(text){
  const rows=[];let row=[],cell="",q=false;
  for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1];if(c==='"'&&q&&n==='"'){cell+='"';i++;continue}if(c==='"'){q=!q;continue}if(c===','&&!q){row.push(cell.trim());cell="";continue}if((c==='\n'||c==='\r')&&!q){if(c==='\r'&&n==='\n')i++;row.push(cell.trim());cell="";if(row.some(v=>v!==''))rows.push(row);row=[];continue}cell+=c}if(cell||row.length){row.push(cell.trim());rows.push(row)}const headers=(rows.shift()||[]).map(h=>h.replace(/^\uFEFF/,'').trim());return rows.map(r=>Object.fromEntries(headers.map((h,i)=>[h,r[i]??""])));
 }
-async function loadCSV(url){const r=await fetch(url,{cache:"no-store"});if(!r.ok)throw new Error("CSV");return parseCSV(await r.text())}
+const CSV_CACHE_TTL=5*60*1000;
+const csvMemoryCache=new Map();
+const csvPromises=new Map();
+async function loadCSV(url,{ttl=CSV_CACHE_TTL,force=false}={}){
+ const now=Date.now(),cached=csvMemoryCache.get(url);
+ if(!force&&cached&&now-cached.time<ttl)return cached.data;
+ if(!force&&csvPromises.has(url))return csvPromises.get(url);
+ const request=(async()=>{
+   try{
+     const r=await fetch(url,{cache:"default"});if(!r.ok)throw new Error("CSV");
+     const data=parseCSV(await r.text());csvMemoryCache.set(url,{time:Date.now(),data});return data;
+   }catch(e){
+     if(cached)return cached.data;
+     throw e;
+   }finally{csvPromises.delete(url);}
+ })();
+ if(!force)csvPromises.set(url,request);
+ return request;
+}
+const dataPromises={};
+function ensureData(key,urls){
+ if(dataPromises[key])return dataPromises[key];
+ dataPromises[key]=Promise.all(urls.filter(Boolean).map(loadCSV));
+ return dataPromises[key];
+}
+function requestIdle(fn){if('requestIdleCallback' in window)window.requestIdleCallback(fn,{timeout:1800});else setTimeout(fn,250);}
 function field(obj,name){const key=Object.keys(obj||{}).find(k=>k.trim().toLowerCase()===name.trim().toLowerCase());return key?String(obj[key]??"").trim():""}
 function game(id){return games.find(x=>field(x,"ID_JUEGO")===id)||{}}
 function serie(id){return series.find(x=>field(x,"ID_SERIE")===id)||{}}
@@ -78,7 +103,10 @@ function scheduledDay(date, dayStreams){
    return {s,start,displayTime,fixedTime:n===1,approximate:n>1};
  }).filter(Boolean);
 }
+let pastMemo={bucket:-1,result:[]};
 function past(){
+ const bucket=Math.floor(Date.now()/30000);
+ if(pastMemo.bucket===bucket)return pastMemo.result;
  const now=new Date(),byDate={};
  streams.forEach((s,index)=>{
    const date=cleanDate(field(s,"FECHA"));
@@ -93,6 +121,7 @@ function past(){
      if(end<=now)result.push(s);
    });
  });
+ pastMemo={bucket,result};
  return result;
 }
 function tz(){return selectedTZ==='auto'?Intl.DateTimeFormat().resolvedOptions().timeZone:selectedTZ}
@@ -120,12 +149,12 @@ function scheduledDisplayTime(s){
  const rawTime=String(field(s,"HORA_ESPAÑA")||"").trim();
  return rawTime ? item.displayTime : "Hora no fijada";
 }
-function streamCard(s){const {g,se}=streamData(s);const time=scheduledDisplayTime(s);return `<article class="stream-card"><img class="cover" src="images/${escape(gameImage(g))}" onerror="this.style.visibility='hidden'"><div class="stream-info"><div class="type">${field(s,"DIRECTO")==='1'?'Primer directo':'Segundo directo'}</div><div class="time">${escape(time)}</div><h2>${escape(gameName(g,field(s,"ID_JUEGO")))}</h2><p class="series-name">${escape(seriesName(se,field(s,"ID_SERIE")))}</p></div></article>`}
+function streamCard(s){const {g,se}=streamData(s);const time=scheduledDisplayTime(s);return `<article class="stream-card"><img class="cover" src="images/${escape(gameImage(g))}" loading="lazy" decoding="async" onerror="this.style.visibility='hidden'"><div class="stream-info"><div class="type">${field(s,"DIRECTO")==='1'?'Primer directo':'Segundo directo'}</div><div class="time">${escape(time)}</div><h2>${escape(gameName(g,field(s,"ID_JUEGO")))}</h2><p class="series-name">${escape(seriesName(se,field(s,"ID_SERIE")))}</p></div></article>`}
 function miniStream(s){
  const {g,se}=streamData(s);
  const rawTime=String(field(s,"HORA_ESPAÑA")||"").trim();
  const time=rawTime ? scheduledDisplayTime(s) : "";
- return `<article class="mini-stream"><img src="images/${escape(gameImage(g))}" onerror="this.style.visibility='hidden'">${time?`<div class="mini-time">${escape(time)}</div>`:''}<h3>${escape(gameName(g,field(s,"ID_JUEGO")))}</h3><div class="mini-series">${escape(seriesName(se,field(s,"ID_SERIE")))}</div></article>`;
+ return `<article class="mini-stream"><img src="images/${escape(gameImage(g))}" loading="lazy" decoding="async" onerror="this.style.visibility='hidden'">${time?`<div class="mini-time">${escape(time)}</div>`:''}<h3>${escape(gameName(g,field(s,"ID_JUEGO")))}</h3><div class="mini-series">${escape(seriesName(se,field(s,"ID_SERIE")))}</div></article>`;
 }
 function dateFromRow(s){const d=cleanDate(field(s,"FECHA"));return d?new Date(`${d}T00:00:00`):new Date(0)}
 function completedStreamsFor(predicate){return past().filter(predicate)}
@@ -310,14 +339,20 @@ function renderNews(){
 }
 function setupHome(){
  document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{const route=b.dataset.go.split('/');showPage(route[0]);if(route[0]==='extra'&&route[1])showExtra(route[1]);});
- document.getElementById('refreshNews')?.addEventListener('click',async()=>{if(SOURCES.news){try{news=await loadCSV(SOURCES.news);renderNews()}catch(e){console.error(e)}}});
+ document.getElementById('refreshNews')?.addEventListener('click',async()=>{if(SOURCES.news){try{news=await loadCSV(SOURCES.news,{force:true,ttl:0});renderNews()}catch(e){console.error(e)}}});
 }
 function renderToday(){const today=madridToday(),ss=streams.filter(s=>cleanDate(field(s,"FECHA"))===today).sort((a,b)=>Number(field(a,"DIRECTO"))-Number(field(b,"DIRECTO")));document.getElementById('today').innerHTML=ss.length?`<div class="today-grid">${ss.map(streamCard).join('')}</div>`:`<div class="empty">Hoy no hay directo.</div>`}
 function monday(d){const x=new Date(d);x.setHours(0,0,0,0);const n=x.getDay();x.setDate(x.getDate()-(n===0?6:n-1));return x}
 function renderWeek(){const start=monday(new Date());start.setDate(start.getDate()+weekOffset*7);const end=new Date(start);end.setDate(end.getDate()+6);document.getElementById('weekTitle').textContent=`${fmtShort(start)} — ${fmtShort(end)}`;const today=madridToday();let html='';for(let i=0;i<7;i++){const d=new Date(start);d.setDate(d.getDate()+i);const ds=localDate(d),ss=streams.filter(s=>cleanDate(field(s,"FECHA"))===ds).sort((a,b)=>Number(field(a,"DIRECTO"))-Number(field(b,"DIRECTO")));html+=`<div class="day-column ${ds===today?'today':''}"><div class="day-head"><div class="day-name">${escape(new Intl.DateTimeFormat('es-ES',{weekday:'long'}).format(d))}</div><div class="day-date">${escape(fmtShort(d))}</div></div><div class="day-streams">${ss.length?ss.map(miniStream).join(''):'<div class="empty">—</div>'}</div></div>`}document.getElementById('week').innerHTML=html}
-function renderStats(){const ps=past(),gc={},sc={};ps.forEach(s=>{const gid=field(s,"ID_JUEGO"),sid=field(s,"ID_SERIE");gc[gid]=(gc[gid]||0)+1;sc[sid]=(sc[sid]||0)+1});const rows=(obj,fn)=>Object.entries(obj).sort((a,b)=>b[1]-a[1]).map(([id,n],i)=>`<div class="rank-row"><span class="rank-number">#${i+1}</span><span>${escape(fn(id))}</span><span class="rank-count">${n}</span></div>`).join('');document.getElementById('statsContent').innerHTML=`<div class="stats-grid"><div class="stat"><div class="stat-label">Directos</div><div class="stat-value">${ps.length}</div></div><div class="stat"><div class="stat-label">Juegos</div><div class="stat-value">${Object.keys(gc).length}</div></div><div class="stat"><div class="stat-label">Series</div><div class="stat-value">${Object.keys(sc).length}</div></div></div><div class="ranking"><h2>Juegos más emitidos</h2>${rows(gc,id=>gameName(game(id),id))||'<div class="empty">—</div>'}</div><div class="ranking"><h2>Series más emitidas</h2>${rows(sc,id=>seriesName(serie(id),id))||'<div class="empty">—</div>'}</div>`}
+function renderStats(){
+ const ps=past(),gc={},sc={};ps.forEach(s=>{const gid=field(s,"ID_JUEGO"),sid=field(s,"ID_SERIE");gc[gid]=(gc[gid]||0)+1;sc[sid]=(sc[sid]||0)+1});
+ const rows=(obj,fn)=>Object.entries(obj).sort((a,b)=>b[1]-a[1]).map(([id,n],i)=>`<div class="rank-row"><span class="rank-number">#${i+1}</span><span>${escape(fn(id))}</span><span class="rank-count">${n}</span></div>`).join('');
+ document.getElementById('statsContent').innerHTML=`<div class="stats-grid"><div class="stat"><div class="stat-label">Directos</div><div class="stat-value">${ps.length}</div></div><div class="stat"><div class="stat-label">Juegos</div><div class="stat-value">${Object.keys(gc).length}</div></div><div class="stat"><div class="stat-label">Series</div><div class="stat-value">${Object.keys(sc).length}</div></div></div><div class="ranking"><h2>Juegos más emitidos</h2>${rows(gc,id=>gameName(game(id),id))||'<div class="empty">—</div>'}</div><div class="ranking"><h2>Series más emitidas</h2>${rows(sc,id=>seriesName(serie(id),id))||'<div class="empty">—</div>'}</div>`;
+}
+
 function catalogMetaGame(g){
- const id=field(g,"ID_JUEGO"),d=streamDatesFor(s=>field(s,"ID_JUEGO")===id);return {...d,name:gameName(g,id)};
+ const id=field(g,"ID_JUEGO"),x=buildGameStats().find(v=>v.id===id);
+ return {name:gameName(g,id),count:x?.count||0,first:x?.first||"",last:x?.last||""};
 }
 function catalogMetaSeries(s){
  const id=field(s,"ID_SERIE"),d=streamDatesFor(x=>field(x,"ID_SERIE")===id);return {...d,name:seriesName(s,id)};
@@ -330,26 +365,60 @@ function catalogQuery(){return (document.getElementById('catalogSearch')?.value|
 function renderGames(){
  const q=catalogQuery();
  const list=sortCatalog(games.filter(g=>gameName(g,field(g,"ID_JUEGO")).toLocaleLowerCase('es').includes(q)),catalogMetaGame);
- document.getElementById('gamesList').innerHTML=list.map(g=>{const id=field(g,"ID_JUEGO"),m=catalogMetaGame(g);return `<article class="game-card" data-game="${escape(id)}"><img src="images/${escape(gameImage(g))}" onerror="this.style.visibility='hidden'"><h2>${escape(m.name)}</h2><div class="muted">${m.count} directos</div></article>`}).join('')||'<div class="empty">No se han encontrado juegos.</div>';document.querySelectorAll('.game-card').forEach(c=>c.onclick=()=>showGame(c.dataset.game));
+ document.getElementById('gamesList').innerHTML=list.map(g=>{const id=field(g,"ID_JUEGO"),m=catalogMetaGame(g);return `<article class="game-card" data-game="${escape(id)}"><img src="images/${escape(gameImage(g))}" loading="lazy" decoding="async" onerror="this.style.visibility='hidden'"><h2>${escape(m.name)}</h2><div class="muted">${m.count} directos</div></article>`}).join('')||'<div class="empty">No se han encontrado juegos.</div>';document.querySelectorAll('.game-card').forEach(c=>c.onclick=()=>showGame(c.dataset.game));
 }
 function renderSeries(){
  const q=catalogQuery();
  const list=sortCatalog(series.filter(s=>seriesName(s,field(s,"ID_SERIE")).toLocaleLowerCase('es').includes(q)),catalogMetaSeries);
- document.getElementById('seriesList').innerHTML=list.map(s=>{const sid=field(s,"ID_SERIE"),gid=field(s,"ID_JUEGO"),g=game(gid),link=seriesLink(s),m=catalogMetaSeries(s);return `<article class="series-card" data-series="${escape(sid)}"><img src="images/${escape(gameImage(g))}" onerror="this.style.visibility='hidden'"><div class="series-card-body"><h2>${escape(m.name)}</h2><div class="series-game">${escape(gameName(g,gid))}</div><div class="series-count">${m.count} directos</div>${link?`<a class="playlist" href="${escape(link)}" target="_blank" rel="noopener">Ver playlist</a>`:''}</div></article>`}).join('')||'<div class="empty">No se han encontrado series.</div>';document.querySelectorAll('.series-card').forEach(c=>c.onclick=e=>{if(e.target.closest('a'))return;showSeries(c.dataset.series)});
+ document.getElementById('seriesList').innerHTML=list.map(s=>{const sid=field(s,"ID_SERIE"),gid=field(s,"ID_JUEGO"),g=game(gid),link=seriesLink(s),m=catalogMetaSeries(s);return `<article class="series-card" data-series="${escape(sid)}"><img src="images/${escape(gameImage(g))}" loading="lazy" decoding="async" onerror="this.style.visibility='hidden'"><div class="series-card-body"><h2>${escape(m.name)}</h2><div class="series-game">${escape(gameName(g,gid))}</div><div class="series-count">${m.count} directos</div>${link?`<a class="playlist" href="${escape(link)}" target="_blank" rel="noopener">Ver playlist</a>`:''}</div></article>`}).join('')||'<div class="empty">No se han encontrado series.</div>';document.querySelectorAll('.series-card').forEach(c=>c.onclick=e=>{if(e.target.closest('a'))return;showSeries(c.dataset.series)});
 }
-function showGame(id,push=true){const g=game(id),ps=past().filter(s=>field(s,"ID_JUEGO")===id),counts={};ps.forEach(s=>{const sid=field(s,"ID_SERIE");counts[sid]=(counts[sid]||0)+1});const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]);const relevant=series.filter(s=>field(s,"ID_JUEGO")===id);document.getElementById('catalog-juegos').classList.remove('active');document.getElementById('catalog-series').classList.remove('active');const detail=document.getElementById('catalog-detail');detail.classList.add('active');detail.innerHTML=`<button class="back" onclick="backCatalog('juegos')">← Juegos</button><div class="detail-top"><img src="images/${escape(gameImage(g))}" onerror="this.style.visibility='hidden'"><div><h2>${escape(gameName(g,id))}</h2><p class="muted">${ps.length} directos</p><h3>Serie más larga</h3><p>${sorted[0]?`${escape(seriesName(serie(sorted[0][0]),sorted[0][0]))} — ${sorted[0][1]} directos`:'—'}</p><h3>Series</h3><div class="series-list">${relevant.map(s=>{const sid=field(s,"ID_SERIE"),n=counts[sid]||0,link=seriesLink(s);return `<div class="series-item" data-series="${escape(sid)}"><strong>${escape(seriesName(s,sid))}</strong><span class="muted">${n} directos</span>${link?`<a class="playlist" href="${escape(link)}" target="_blank" rel="noopener">Playlist</a>`:''}</div>`}).join('')||'<span class="muted">Sin series.</span>'}</div></div></div>`;detail.querySelectorAll('.series-item').forEach(el=>el.onclick=e=>{if(e.target.closest('a'))return;showSeries(el.dataset.series)});if(push)history.pushState({page:'catalogo',tab:'juegos',detail:'game',id},'',`#catalogo/juegos/game/${encodeURIComponent(id)}`)}
+function gameStatsRows(filter="",search=""){
+ const all=buildGameStats(),total=all.reduce((n,x)=>n+x.count,0);
+ const topIds=new Set(all.slice(0,6).map(x=>x.id));
+ const q=String(search||"").trim().toLocaleLowerCase('es');
+ return all.filter(x=>{
+   const name=gameName(game(x.id),x.id).toLocaleLowerCase('es');
+   if(q&&!name.includes(q))return false;
+   if(filter==='others'&&topIds.has(x.id))return false;
+   if(filter&&filter!=='others'&&x.id!==filter)return false;
+   return true;
+ }).map(x=>({...x,name:gameName(game(x.id),x.id),share:total?x.count/total*100:0,seriesShare:x.count?x.longestCount/x.count*100:0}));
+}
+function renderGameStats(){
+ const host=document.getElementById('gameStatsContent');if(!host)return;
+ const all=buildGameStats(),total=all.reduce((n,x)=>n+x.count,0),top=all.slice(0,6),others=all.slice(6).reduce((n,x)=>n+x.count,0);
+ const segment=(x,i)=>`<button type="button" class="game-share-segment game-share-${i+1}" data-stat-filter="${escape(x.id)}" style="--segment-width:${x.share}%;" title="${escape(x.name)} · ${x.count} directos · ${x.share.toFixed(1)}%">${x.share>=4?`<span>${x.share.toFixed(1)}%</span>`:''}</button>`;
+ const bar=[...top.map((x,i)=>({...x,name:gameName(game(x.id),x.id),share:total?x.count/total*100:0})),...(others? [{id:'__others__',name:'Otros',count:others,share:total?others/total*100:0}]:[])];
+ host.innerHTML=`
+ <div class="game-stats-intro"><div><p class="eyebrow">STREAM TIME DISTRIBUTION</p><h2>Juegos más jugados</h2><p>Distribución de los directos completados por juego. Los seis juegos principales ocupan su propio segmento; el resto se agrupa en «Otros».</p></div><div class="game-stats-total"><strong>${total}</strong><span>directos contabilizados</span></div></div>
+ <div class="game-share-wrap">
+   <div class="game-share-bar" aria-label="Distribución de directos por juego">${bar.map((x,i)=>x.id==='__others__'?`<button type="button" class="game-share-segment game-share-others" data-stat-filter="others" style="--segment-width:${x.share}%;" title="Otros · ${x.count} directos · ${x.share.toFixed(1)}%">${x.share>=5?`<span>${x.share.toFixed(1)}%</span>`:''}</button>`:segment(x,i)).join('')}</div>
+   <div class="game-share-legend">${bar.map((x,i)=>`<button type="button" class="game-share-legend-item" data-stat-filter="${x.id==='__others__'?'others':escape(x.id)}"><i class="game-share-dot ${x.id==='__others__'?'game-share-others':'game-share-'+(i+1)}"></i><span>${escape(x.name)}</span><strong>${x.count}</strong></button>`).join('')}</div>
+ </div>
+ <div class="game-stats-controls"><input id="gameStatsSearch" type="search" placeholder="Buscar juego..." autocomplete="off"><button type="button" class="stats-filter-clear" data-stat-filter="">Todos</button><button type="button" class="stats-filter-clear" data-stat-filter="others">Solo «Otros»</button></div>
+ <div class="game-stats-table" id="gameStatsTable"></div>`;
+ const draw=(filter="",search="")=>{
+   const rows=gameStatsRows(filter,search);
+   document.getElementById('gameStatsTable').innerHTML=rows.length?rows.map((x,i)=>`<button type="button" class="game-stat-row" data-game="${escape(x.id)}"><span class="game-stat-rank">#${i+1}</span><span class="game-stat-name">${escape(x.name)}</span><strong>${x.count}</strong><span>${x.share.toFixed(1)}% del total</span><span>${x.longestCount} · ${x.seriesShare.toFixed(1)}%</span><time>${escape(fmtDate(x.first))}</time><time>${escape(fmtDate(x.last))}</time></button>`).join(''):'<div class="empty">No se han encontrado juegos.</div>';
+   document.querySelectorAll('#gameStatsTable .game-stat-row').forEach(r=>r.onclick=()=>showGame(r.dataset.game));
+ };
+ draw();
+ const search=document.getElementById('gameStatsSearch');search.oninput=()=>draw(window.__gameStatsFilter||'',search.value);
+ host.querySelectorAll('[data-stat-filter]').forEach(el=>el.onclick=()=>{window.__gameStatsFilter=el.dataset.statFilter||'';draw(window.__gameStatsFilter,search.value);host.querySelectorAll('.stats-filter-clear').forEach(b=>b.classList.toggle('active',b.dataset.statFilter===window.__gameStatsFilter));});
+}
+function showGame(id,push=true){const g=game(id),ps=past().filter(s=>field(s,"ID_JUEGO")===id),counts={};ps.forEach(s=>{const sid=field(s,"ID_SERIE");counts[sid]=(counts[sid]||0)+1});const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]);const relevant=series.filter(s=>field(s,"ID_JUEGO")===id);document.getElementById('catalog-juegos').classList.remove('active');document.getElementById('catalog-series').classList.remove('active');document.getElementById('catalog-estadisticas').classList.remove('active');const detail=document.getElementById('catalog-detail');detail.classList.add('active');detail.innerHTML=`<button class="back" onclick="backCatalog('juegos')">← Juegos</button><div class="detail-top"><img src="images/${escape(gameImage(g))}" loading="lazy" decoding="async" onerror="this.style.visibility='hidden'"><div><h2>${escape(gameName(g,id))}</h2><p class="muted">${ps.length} directos</p><h3>Serie más larga</h3><p>${sorted[0]?`${escape(seriesName(serie(sorted[0][0]),sorted[0][0]))} — ${sorted[0][1]} directos`:'—'}</p><h3>Series</h3><div class="series-list">${relevant.map(s=>{const sid=field(s,"ID_SERIE"),n=counts[sid]||0,link=seriesLink(s);return `<div class="series-item" data-series="${escape(sid)}"><strong>${escape(seriesName(s,sid))}</strong><span class="muted">${n} directos</span>${link?`<a class="playlist" href="${escape(link)}" target="_blank" rel="noopener">Playlist</a>`:''}</div>`}).join('')||'<span class="muted">Sin series.</span>'}</div></div></div>`;detail.querySelectorAll('.series-item').forEach(el=>el.onclick=e=>{if(e.target.closest('a'))return;showSeries(el.dataset.series)});if(push)history.pushState({page:'catalogo',tab:'juegos',detail:'game',id},'',`#catalogo/juegos/game/${encodeURIComponent(id)}`)}
 function showSeries(id,push=true){
  const s=serie(id),gid=field(s,"ID_JUEGO"),g=game(gid),ps=past().filter(x=>field(x,"ID_SERIE")===id),link=seriesLink(s);
  const dates=streamDatesFor(x=>field(x,"ID_SERIE")===id);
  document.getElementById('catalog-juegos').classList.remove('active');document.getElementById('catalog-series').classList.remove('active');
  const detail=document.getElementById('catalog-detail');detail.classList.add('active');
- detail.innerHTML=`<button class="back" onclick="backCatalog('series')">← Series</button><div class="detail-top"><img src="images/${escape(gameImage(g))}" onerror="this.style.visibility='hidden'"><div><h2>${escape(seriesName(s,id))}</h2><p class="muted">${escape(gameName(g,gid))}</p><div class="detail-data"><div><span>Primer directo</span><strong>${escape(fmtDate(dates.first))}</strong></div><div><span>Último directo</span><strong>${escape(fmtDate(dates.last))}</strong></div><div><span>Número de directos</span><strong>${ps.length}</strong></div></div>${link?`<a class="playlist big" href="${escape(link)}" target="_blank" rel="noopener">Ver playlist en YouTube</a>`:''}</div></div>`;
+ detail.innerHTML=`<button class="back" onclick="backCatalog('series')">← Series</button><div class="detail-top"><img src="images/${escape(gameImage(g))}" loading="lazy" decoding="async" onerror="this.style.visibility='hidden'"><div><h2>${escape(seriesName(s,id))}</h2><p class="muted">${escape(gameName(g,gid))}</p><div class="detail-data"><div><span>Primer directo</span><strong>${escape(fmtDate(dates.first))}</strong></div><div><span>Último directo</span><strong>${escape(fmtDate(dates.last))}</strong></div><div><span>Número de directos</span><strong>${ps.length}</strong></div></div>${link?`<a class="playlist big" href="${escape(link)}" target="_blank" rel="noopener">Ver playlist en YouTube</a>`:''}</div></div>`;
  if(push)history.pushState({page:'catalogo',tab:'series',detail:'series',id},'',`#catalogo/series/series/${encodeURIComponent(id)}`);
 }
-function backCatalog(tab='juegos',push=true){document.getElementById('catalog-detail').classList.remove('active');document.getElementById('catalog-'+tab).classList.add('active');document.querySelectorAll('.catalog-btn').forEach(b=>b.classList.toggle('active',b.dataset.catalog===tab));if(push)history.pushState({page:'catalogo',tab},'',`#catalogo/${tab}`)}
+function backCatalog(tab='juegos',push=true){document.getElementById('catalog-detail').classList.remove('active');document.querySelectorAll('.catalog-page').forEach(x=>x.classList.remove('active'));document.getElementById('catalog-'+tab).classList.add('active');document.querySelectorAll('.catalog-btn').forEach(b=>b.classList.toggle('active',b.dataset.catalog===tab));if(push)history.pushState({page:'catalogo',tab},'',`#catalogo/${tab}`)}
 function setupCatalog(){
- document.querySelectorAll('.catalog-btn').forEach(b=>b.onclick=()=>{const tab=b.dataset.catalog;document.querySelectorAll('.catalog-btn').forEach(x=>x.classList.toggle('active',x===b));document.getElementById('catalog-juegos').classList.toggle('active',tab==='juegos');document.getElementById('catalog-series').classList.toggle('active',tab==='series');document.getElementById('catalog-detail').classList.remove('active');history.pushState({page:'catalogo',tab},'',`#catalogo/${tab}`);});
- const refresh=()=>{renderGames();renderSeries()};
+ document.querySelectorAll('.catalog-btn').forEach(b=>b.onclick=()=>{const tab=b.dataset.catalog;document.querySelectorAll('.catalog-btn').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.catalog-page').forEach(x=>x.classList.remove('active'));document.getElementById(`catalog-${tab}`).classList.add('active');if(tab==='estadisticas')renderGameStats();else if(tab==='juegos')renderGames();else renderSeries();document.getElementById('catalog-detail').classList.remove('active');history.pushState({page:'catalogo',tab},'',`#catalogo/${tab}`);});
+ const refresh=()=>{if(document.getElementById('catalog-juegos').classList.contains('active'))renderGames();if(document.getElementById('catalog-series').classList.contains('active'))renderSeries()};
  document.getElementById('catalogSearch')?.addEventListener('input',refresh);
  document.getElementById('catalogSort')?.addEventListener('change',refresh);
 }
@@ -490,17 +559,25 @@ function showFichasTab(tab='info',push=true){const valid=['info','usuarios','est
 function setupFichas(){document.querySelectorAll('.fichas-tab').forEach(b=>b.onclick=()=>showFichasTab(b.dataset.fichas));}
 
 function showExtra(sub='locke',push=true){
- const valid=['locke','medallas','minijuegos'];
- if(!valid.includes(sub))sub='locke';
- selectedExtra=sub;
- document.querySelectorAll('.extra-tab').forEach(b=>b.classList.toggle('active',b.dataset.extra===sub));
- document.querySelectorAll('.extra-page').forEach(p=>p.classList.toggle('active',p.id===`extra-${sub}`));
+ const valid=['locke','medallas','minijuegos'];if(!valid.includes(sub))sub='locke';selectedExtra=sub;
+ document.querySelectorAll('.extra-tab').forEach(b=>b.classList.toggle('active',b.dataset.extra===sub));document.querySelectorAll('.extra-page').forEach(p=>p.classList.toggle('active',p.id===`extra-${sub}`));
+ if(sub==='medallas'){const host=document.getElementById('medalRanking');if(host)host.innerHTML='<div class="empty">Cargando ranking…</div>';ensureData('medals',[SOURCES.medals,SOURCES.users]).then(([m,u])=>{medals=m;users=u;renderMedalRanking()}).catch(e=>console.error(e));}
  if(push)history.pushState({page:'extra',sub},'',`#extra/${sub}`);
 }
+
 function setupExtra(){
  document.querySelectorAll('.extra-tab').forEach(b=>b.onclick=()=>showExtra(b.dataset.extra));
 }
-function showPage(page,push=true){const valid=['inicio','calendario','catalogo','casas','fichas','extra'];if(!valid.includes(page))page='inicio';document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===page));document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===page));if(page==='calendario'){renderToday();renderWeek();renderStats()}if(page==='casas'){renderHouses()}if(page==='fichas'){renderFichas()}if(page==='catalogo'){renderGames();renderSeries();document.getElementById('catalog-detail').classList.remove('active');document.getElementById('catalog-juegos').classList.add('active');document.getElementById('catalog-series').classList.remove('active');document.querySelectorAll('.catalog-btn').forEach(b=>b.classList.toggle('active',b.dataset.catalog==='juegos'));}if(push)history.pushState({page},'',`#${page}`)}
+function showPage(page,push=true){
+ const valid=['inicio','calendario','catalogo','casas','fichas','extra'];if(!valid.includes(page))page='inicio';
+ document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===page));document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
+ if(page==='calendario'){renderToday();renderWeek();renderStats()}
+ if(page==='casas'){document.getElementById('housesContent').innerHTML='<div class="empty">Cargando casas…</div>';ensureData('houses',[SOURCES.houses,SOURCES.housePoints,SOURCES.houseAwards]).then(([h,p,a])=>{houses=h;housePoints=p;houseAwards=a;renderHouses();renderHouseHub()}).catch(e=>console.error(e))}
+ if(page==='fichas'){document.getElementById('fichasUsersContent').innerHTML='<div class="empty">Cargando fichas…</div>';ensureData('fichas',[SOURCES.fichas]).then(([f])=>{fichas=f;renderFichas()}).catch(e=>console.error(e))}
+ if(page==='catalogo'){renderGames();document.getElementById('catalog-detail').classList.remove('active');document.querySelectorAll('.catalog-page').forEach(x=>x.classList.remove('active'));document.getElementById('catalog-juegos').classList.add('active');document.querySelectorAll('.catalog-btn').forEach(b=>b.classList.toggle('active',b.dataset.catalog==='juegos'));}
+ if(push)history.pushState({page},'',`#${page}`)
+}
+
 function showSub(sub,push=true){document.querySelectorAll('.subpage').forEach(p=>p.classList.toggle('active',p.id===sub));document.querySelectorAll('.sub-btn').forEach(b=>b.classList.toggle('active',b.dataset.subpage===sub));if(push)history.pushState({page:'calendario',sub},'',`#calendario/${sub}`)}
 function setupNav(){document.querySelectorAll('.nav-btn').forEach(b=>b.onclick=()=>showPage(b.dataset.page));document.querySelector('.brand').onclick=e=>{e.preventDefault();showPage('inicio')};document.querySelectorAll('.sub-btn').forEach(b=>b.onclick=()=>showSub(b.dataset.subpage));window.addEventListener('popstate',()=>{restoreRoute(false)})}
 function setupWeek(){document.getElementById('prevWeek').onclick=()=>{weekOffset--;renderWeek();history.pushState({page:'calendario',sub:'semana',weekOffset},'',`#calendario/semana/${weekOffset}`)};document.getElementById('nextWeek').onclick=()=>{weekOffset++;renderWeek();history.pushState({page:'calendario',sub:'semana',weekOffset},'',`#calendario/semana/${weekOffset}`)};document.getElementById('todayWeek').onclick=()=>{weekOffset=0;renderWeek();history.pushState({page:'calendario',sub:'semana',weekOffset:0},'',`#calendario/semana/0`)}}
@@ -514,13 +591,12 @@ function restoreRoute(push=false){
    renderWeek();
  }else if(page==='casas'){
    showPage('casas',push);
-   renderHouses();
  }else if(page==='fichas'){
    showPage('fichas',push);
    showFichasTab(p[1]||'info',push);
  }else if(page==='catalogo'){
    showPage('catalogo',push);
-   const tab=p[1]==='series'?'series':'juegos';
+   const tab=p[1]==='series'?'series':p[1]==='estadisticas'?'estadisticas':'juegos';
    if(p[2]==='game'&&tab==='juegos'&&p[3]){
      document.querySelectorAll('.catalog-btn').forEach(b=>b.classList.toggle('active',b.dataset.catalog==='juegos'));
      showGame(decodeURIComponent(p[3]),false);
@@ -531,6 +607,8 @@ function restoreRoute(push=false){
      document.querySelectorAll('.catalog-btn').forEach(b=>b.classList.toggle('active',b.dataset.catalog===tab));
      document.getElementById('catalog-juegos').classList.toggle('active',tab==='juegos');
      document.getElementById('catalog-series').classList.toggle('active',tab==='series');
+     document.getElementById('catalog-estadisticas').classList.toggle('active',tab==='estadisticas');
+     if(tab==='estadisticas')renderGameStats();
      document.getElementById('catalog-detail').classList.remove('active');
    }
  }else if(page==='extra'){
@@ -542,13 +620,18 @@ function restoreRoute(push=false){
 }
 async function init(){
  try{
-   const [g,s,st,m,u,h,p,a,f]=await Promise.all([loadCSV(SOURCES.games),loadCSV(SOURCES.series),loadCSV(SOURCES.streams),loadCSV(SOURCES.medals),loadCSV(SOURCES.users),loadCSV(SOURCES.houses),loadCSV(SOURCES.housePoints),loadCSV(SOURCES.houseAwards),loadCSV(SOURCES.fichas)]);
-   games=g;series=s;streams=st;medals=m;users=u;houses=h;housePoints=p;houseAwards=a;fichas=f;
-   if(SOURCES.news){try{news=await loadCSV(SOURCES.news)}catch(e){console.warn('Novedades no disponibles',e)}}
+   const [g,s,st]=await ensureData('core',[SOURCES.games,SOURCES.series,SOURCES.streams]);
+   games=g;series=s;streams=st;
    setupTZ();setupNav();setupWeek();setupCatalog();setupExtra();setupFichas();setupHome();
-   renderHub();renderHouseHub();renderHouses();renderFichas();renderNews();renderWeek();renderStats();renderGames();renderSeries();renderMedalRanking();restoreRoute(false);
+   renderHub();renderWeek();renderStats();renderGames();restoreRoute(false);
+   requestIdle(()=>{
+     Promise.all([
+       ensureData('home',[SOURCES.news,SOURCES.houses,SOURCES.housePoints]),
+     ]).then(([data])=>{news=data[0];houses=data[1];housePoints=data[2];renderNews();renderHouseHub()}).catch(e=>console.warn('Datos secundarios no disponibles',e));
+   });
  }catch(e){console.error(e);document.getElementById('today').innerHTML='<div class="empty">No se ha podido cargar el calendario.</div>'}
 }
+
 init();
 
 // Las estadísticas dependen de la hora actual, no del cambio de día.
