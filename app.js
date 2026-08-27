@@ -117,6 +117,9 @@ function past(){
  const result=[];
  Object.entries(byDate).forEach(([date,dayStreams])=>{
    scheduledDay(date,dayStreams).forEach(({s,start})=>{
+     // Si no podemos determinar la hora de inicio, no podemos afirmar que
+     // el directo ya haya terminado. Simplemente lo dejamos fuera.
+     if(!start || isNaN(start.getTime()))return;
      // Consideramos completado cada directo una hora después de su inicio.
      const end=new Date(start.getTime()+3600000);
      if(end<=now)result.push(s);
@@ -467,36 +470,24 @@ function gameStatsRows(filter="",search=""){
  }).map(x=>({...x,name:gameName(game(x.id),x.id),share:total?x.count/total*100:0,seriesShare:x.count?x.longestCount/x.count*100:0}));
 }
 function renderGameStats(){
- const host=document.getElementById('gameStatsContent');if(!host)return;
- const all=buildGameStats(),total=all.reduce((n,x)=>n+x.count,0),top=all.slice(0,6),others=all.slice(6).reduce((n,x)=>n+x.count,0);
- const bar=[...top.map(x=>({...x,name:gameName(game(x.id),x.id),share:total?x.count/total*100:0})),...(others?[{id:'__others__',name:'Otros',count:others,share:total?others/total*100:0}]:[])];
- const segment=(x,i)=>{
-   const g=game(x.id),img=gameImage(g);
-   return `<button type="button" class="game-share-segment game-share-${i+1}" data-stat-filter="${escape(x.id)}" style="--segment-width:${x.share}%;" title="${escape(x.name)} · ${x.count} directos · ${x.share.toFixed(1)}%">
-     ${img?`<img src="images/${escape(img)}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'">`:''}
-     <span class="game-share-overlay"></span>
-   </button>`;
- };
- const othersSegment=others?`<button type="button" class="game-share-segment game-share-others" data-stat-filter="others" style="--segment-width:${others/total*100}%;" title="Otros · ${others} directos · ${(others/total*100).toFixed(1)}%"><span class="game-share-overlay"></span></button>`:'';
- host.innerHTML=`
- <div class="game-stats-intro"><div><p class="eyebrow">STREAM DISTRIBUTION</p><h2>Juegos más jugados</h2><p>Distribución de todos los directos completados. Los seis juegos principales aparecen individualmente y el resto se agrupa en «Otros».</p></div><div class="game-stats-total"><strong>${total}</strong><span>directos contabilizados</span></div></div>
- <div class="game-share-wrap">
-   <div class="game-share-labels">${bar.map((x,i)=>`<button type="button" class="game-share-label" data-stat-filter="${x.id==='__others__'?'others':escape(x.id)}" style="--segment-width:${x.share}%"><strong>${x.share.toFixed(1)}%</strong><span>${escape(x.name)}</span></button>`).join('')}</div>
-   <div class="game-share-bar" aria-label="Distribución de directos por juego">${top.map((x,i)=>segment(x,i)).join('')}${othersSegment}</div>
-   <div class="game-share-legend">${bar.map((x,i)=>`<button type="button" class="game-share-legend-item" data-stat-filter="${x.id==='__others__'?'others':escape(x.id)}"><i class="game-share-dot ${x.id==='__others__'?'game-share-others':'game-share-'+(i+1)}"></i><span>${escape(x.name)}</span><strong>${x.count}</strong></button>`).join('')}</div>
- </div>
- <div class="game-stats-controls"><input id="gameStatsSearch" type="search" placeholder="Buscar juego..." autocomplete="off"><button type="button" class="stats-filter-clear" data-stat-filter="">Todos</button><button type="button" class="stats-filter-clear" data-stat-filter="others">Solo «Otros»</button></div>
- <div class="game-stats-table" id="gameStatsTable"></div>`;
- const draw=(filter="",search="")=>{
-   const rows=gameStatsRows(filter,search);
-   document.getElementById('gameStatsTable').innerHTML=rows.length?`<div class="game-stat-header"><span>#</span><span>Juego</span><span>Directos</span><span>Serie más larga</span><span>Primera vez jugado</span><span>Última vez jugado</span></div>${rows.map((x,i)=>{const img=gameImage(game(x.id));return `<button type="button" class="game-stat-row" data-game="${escape(x.id)}"><span class="game-stat-rank">${i+1}</span><span class="game-stat-game">${img?`<img src="images/${escape(img)}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'">`:''}<strong>${escape(x.name)}</strong></span><span class="game-stat-number"><strong>${x.count}</strong><small>${x.share.toFixed(1)}% del total</small></span><span class="game-stat-number"><strong>${x.longestCount}</strong><small>${x.seriesShare.toFixed(1)}% del juego</small></span><time>${escape(fmtDate(x.first))}</time><time>${escape(fmtDate(x.last))}</time></button>`}).join('')}`:'<div class="empty">No se han encontrado juegos.</div>';
-   document.querySelectorAll('#gameStatsTable .game-stat-row').forEach(r=>r.onclick=()=>showGame(r.dataset.game));
- };
- draw();
- const search=document.getElementById('gameStatsSearch');search.oninput=()=>draw(window.__gameStatsFilter||'',search.value);
- host.querySelectorAll('[data-stat-filter]').forEach(el=>el.onclick=()=>{window.__gameStatsFilter=el.dataset.statFilter||'';draw(window.__gameStatsFilter,search.value);host.querySelectorAll('.stats-filter-clear').forEach(b=>b.classList.toggle('active',b.dataset.statFilter===window.__gameStatsFilter));});
+ const host=document.getElementById('gameStatsContent');
+ if(!host)return;
+ try{
+   const all=buildGameStats();
+   const total=all.reduce((n,x)=>n+x.count,0);
+   const top=all.slice(0,6);
+   const others=all.slice(6).reduce((n,x)=>n+x.count,0);
+   const bar=[...top.map(x=>({...x,name:gameName(game(x.id),x.id),share:total?x.count/total*100:0})),...(others?[{id:'__others__',name:'Otros',count:others,share:total?others/total*100:0}]:[])];
+   const segment=(x,i)=>{const img=gameImage(game(x.id));return `<button type="button" class="game-share-segment game-share-${i+1}" data-stat-filter="${escape(x.id)}" style="--segment-width:${x.share}%;" title="${escape(x.name)} · ${x.count} directos · ${x.share.toFixed(1)}%">${img?`<img src="images/${escape(img)}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'">`:''}<span class="game-share-overlay" aria-hidden="true"></span></button>`};
+   const othersSegment=others?`<button type="button" class="game-share-segment game-share-others" data-stat-filter="others" style="--segment-width:${others/total*100}%" title="Otros · ${others} directos · ${(others/total*100).toFixed(1)}%"><span class="game-share-overlay" aria-hidden="true"></span></button>`:'';
+   host.innerHTML=`<div class="game-stats-intro"><div><p class="eyebrow">STREAM DISTRIBUTION</p><h2>Juegos más jugados</h2><p>Distribución de todos los directos completados. Los seis juegos principales aparecen individualmente y el resto se agrupa en «Otros».</p></div><div class="game-stats-total"><strong>${total}</strong><span>directos contabilizados</span></div></div><div class="game-share-wrap"><div class="game-share-labels">${bar.map(x=>`<button type="button" class="game-share-label" data-stat-filter="${x.id==='__others__'?'others':escape(x.id)}" style="--segment-width:${x.share}%"><strong>${x.share.toFixed(1)}%</strong><span>${escape(x.name)}</span></button>`).join('')}</div><div class="game-share-bar" aria-label="Distribución de directos por juego">${top.map((x,i)=>segment(x,i)).join('')}${othersSegment}</div><div class="game-share-legend">${bar.map((x,i)=>`<button type="button" class="game-share-legend-item" data-stat-filter="${x.id==='__others__'?'others':escape(x.id)}"><i class="game-share-dot ${x.id==='__others__'?'game-share-others':'game-share-'+(i+1)}"></i><span>${escape(x.name)}</span><strong>${x.count}</strong></button>`).join('')}</div></div><div class="game-stats-controls"><input id="gameStatsSearch" type="search" placeholder="Buscar juego..." autocomplete="off"><button type="button" class="stats-filter-clear" data-stat-filter="">Todos</button><button type="button" class="stats-filter-clear" data-stat-filter="others">Solo «Otros»</button></div><div class="game-stats-table" id="gameStatsTable"></div>`;
+   const draw=(filter='',search='')=>{const rows=gameStatsRows(filter,search),table=document.getElementById('gameStatsTable');if(!table)return;table.innerHTML=rows.length?`<div class="game-stat-header"><span>#</span><span>Juego</span><span>Directos</span><span>Serie más larga</span><span>Primera vez jugado</span><span>Última vez jugado</span></div>${rows.map((x,i)=>{const img=gameImage(game(x.id));return `<button type="button" class="game-stat-row" data-game="${escape(x.id)}"><span class="game-stat-rank">${i+1}</span><span class="game-stat-game">${img?`<img src="images/${escape(img)}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'">`:''}<strong>${escape(x.name)}</strong></span><span class="game-stat-number"><strong>${x.count}</strong><small>${x.share.toFixed(1)}% del total</small></span><span class="game-stat-number"><strong>${x.longestCount}</strong><small>${x.seriesShare.toFixed(1)}% del juego</small></span><time>${escape(fmtDate(x.first))}</time><time>${escape(fmtDate(x.last))}</time></button>`}).join('')}`:'<div class="empty">No se han encontrado juegos.</div>';table.querySelectorAll('.game-stat-row').forEach(r=>r.onclick=()=>showGame(r.dataset.game));};
+   const search=document.getElementById('gameStatsSearch');
+   draw(window.__gameStatsFilter||'',search?.value||'');
+   if(search)search.oninput=()=>draw(window.__gameStatsFilter||'',search.value);
+   host.querySelectorAll('[data-stat-filter]').forEach(el=>el.onclick=()=>{window.__gameStatsFilter=el.dataset.statFilter||'';draw(window.__gameStatsFilter,search?.value||'');host.querySelectorAll('.stats-filter-clear').forEach(b=>b.classList.toggle('active',b.dataset.statFilter===window.__gameStatsFilter));});
+ }catch(err){console.error('Error al renderizar las estadísticas de Gameplays:',err);host.innerHTML='<div class="empty">No se han podido calcular las estadísticas. Revisa la consola para más detalles.</div>';}
 }
-
 function showGame(id,push=true){const g=game(id),ps=past().filter(s=>field(s,"ID_JUEGO")===id),counts={};ps.forEach(s=>{const sid=field(s,"ID_SERIE");counts[sid]=(counts[sid]||0)+1});const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]);const relevant=series.filter(s=>field(s,"ID_JUEGO")===id);document.getElementById('catalog-juegos').classList.remove('active');document.getElementById('catalog-series').classList.remove('active');document.getElementById('catalog-estadisticas').classList.remove('active');const detail=document.getElementById('catalog-detail');detail.classList.add('active');detail.innerHTML=`<button class="back" onclick="backCatalog('juegos')">← Juegos</button><div class="detail-top"><img src="images/${escape(gameImage(g))}" loading="lazy" decoding="async" onerror="this.style.visibility='hidden'"><div><h2>${escape(gameName(g,id))}</h2><p class="muted">${ps.length} directos</p><h3>Serie más larga</h3><p>${sorted[0]?`${escape(seriesName(serie(sorted[0][0]),sorted[0][0]))} — ${sorted[0][1]} directos`:'—'}</p><h3>Series</h3><div class="series-list">${relevant.map(s=>{const sid=field(s,"ID_SERIE"),n=counts[sid]||0,link=seriesLink(s);return `<div class="series-item" data-series="${escape(sid)}"><strong>${escape(seriesName(s,sid))}</strong><span class="muted">${n} directos</span>${link?`<a class="playlist" href="${escape(link)}" target="_blank" rel="noopener">Playlist</a>`:''}</div>`}).join('')||'<span class="muted">Sin series.</span>'}</div></div></div>`;detail.querySelectorAll('.series-item').forEach(el=>el.onclick=e=>{if(e.target.closest('a'))return;showSeries(el.dataset.series)});if(push)history.pushState({page:'catalogo',tab:'juegos',detail:'game',id},'',`#catalogo/juegos/game/${encodeURIComponent(id)}`)}
 function showSeries(id,push=true){
  const s=serie(id),gid=field(s,"ID_JUEGO"),g=game(gid),ps=past().filter(x=>field(x,"ID_SERIE")===id),link=seriesLink(s);
