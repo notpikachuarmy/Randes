@@ -50,8 +50,9 @@ async function loadCSV(url,{ttl=CSV_CACHE_TTL,force=false}={}){
 const dataPromises={};
 function ensureData(key,urls){
  if(dataPromises[key])return dataPromises[key];
- dataPromises[key]=Promise.all(urls.filter(Boolean).map(loadCSV));
- return dataPromises[key];
+ const request=Promise.all(urls.filter(Boolean).map(loadCSV)).catch(err=>{delete dataPromises[key];throw err});
+ dataPromises[key]=request;
+ return request;
 }
 function requestIdle(fn){if('requestIdleCallback' in window)window.requestIdleCallback(fn,{timeout:1800});else setTimeout(fn,250);}
 function field(obj,name){const key=Object.keys(obj||{}).find(k=>k.trim().toLowerCase()===name.trim().toLowerCase());return key?String(obj[key]??"").trim():""}
@@ -350,27 +351,108 @@ function renderStats(){
  document.getElementById('statsContent').innerHTML=`<div class="stats-grid"><div class="stat"><div class="stat-label">Directos</div><div class="stat-value">${ps.length}</div></div><div class="stat"><div class="stat-label">Juegos</div><div class="stat-value">${Object.keys(gc).length}</div></div><div class="stat"><div class="stat-label">Series</div><div class="stat-value">${Object.keys(sc).length}</div></div></div><div class="ranking"><h2>Juegos más emitidos</h2>${rows(gc,id=>gameName(game(id),id))||'<div class="empty">—</div>'}</div><div class="ranking"><h2>Series más emitidas</h2>${rows(sc,id=>seriesName(serie(id),id))||'<div class="empty">—</div>'}</div>`;
 }
 
+// Estadísticas del catálogo de juegos.
+// Se calculan una sola vez por ciclo de `past()` para evitar repetir el recorrido
+// completo de los directos mientras se pinta/ordena el catálogo.
+let gameStatsMemo={bucket:-1,result:[],map:new Map()};
+function buildGameStats(){
+ const bucket=Math.floor(Date.now()/30000);
+ if(gameStatsMemo.bucket===bucket)return gameStatsMemo.result;
+ const completed=past();
+ const byGame=new Map();
+ for(const s of completed){
+   const gid=field(s,"ID_JUEGO");
+   if(!gid)continue;
+   let item=byGame.get(gid);
+   if(!item){
+     item={id:gid,count:0,first:"",last:"",series:new Map()};
+     byGame.set(gid,item);
+   }
+   item.count++;
+   const d=cleanDate(field(s,"FECHA"));
+   if(d&&(!item.first||d<item.first))item.first=d;
+   if(d&&(!item.last||d>item.last))item.last=d;
+   const sid=field(s,"ID_SERIE")||"__sin_serie__";
+   item.series.set(sid,(item.series.get(sid)||0)+1);
+ }
+ const result=Array.from(byGame.values()).map(item=>{
+   let longestCount=0,longestSeries="";
+   for(const [sid,n] of item.series){
+     if(n>longestCount){longestCount=n;longestSeries=sid;}
+   }
+   return {id:item.id,count:item.count,first:item.first,last:item.last,longestCount,longestSeries};
+ }).sort((a,b)=>b.count-a.count||a.last.localeCompare(b.last)||gameName(game(a.id),a.id).localeCompare(gameName(game(b.id),b.id),'es'));
+ gameStatsMemo={bucket,result,map:new Map(result.map(x=>[x.id,x]))};
+ return result;
+}
+function gameStat(id){
+ buildGameStats();
+ return gameStatsMemo.map.get(id)||{id,count:0,first:"",last:"",longestCount:0,longestSeries:""};
+}
+
 function catalogMetaGame(g){
- const id=field(g,"ID_JUEGO"),x=buildGameStats().find(v=>v.id===id);
- return {name:gameName(g,id),count:x?.count||0,first:x?.first||"",last:x?.last||""};
+ const id=field(g,"ID_JUEGO"),x=gameStat(id);
+ return {name:gameName(g,id),count:x.count,first:x.first,last:x.last};
 }
 function catalogMetaSeries(s){
- const id=field(s,"ID_SERIE"),d=streamDatesFor(x=>field(x,"ID_SERIE")===id);return {...d,name:seriesName(s,id)};
+ const id=field(s,"ID_SERIE"),d=streamDatesFor(x=>field(x,"ID_SERIE")===id);
+ return {...d,name:seriesName(s,id)};
 }
 function sortCatalog(items,meta){
  const sort=document.getElementById('catalogSort')?.value||'recent';
- return items.sort((a,b)=>{const A=meta(a),B=meta(b);if(sort==='az')return A.name.localeCompare(B.name,'es');if(sort==='za')return B.name.localeCompare(A.name,'es');if(sort==='most')return B.count-A.count||A.name.localeCompare(B.name,'es');if(sort==='least')return A.count-B.count||A.name.localeCompare(B.name,'es');if(sort==='oldest')return (A.last?new Date(A.last):new Date(8640000000000000))-(B.last?new Date(B.last):new Date(8640000000000000))||A.name.localeCompare(B.name,'es');return (B.last?new Date(B.last):0)-(A.last?new Date(A.last):0)||A.name.localeCompare(B.name,'es');});
+ return items.sort((a,b)=>{
+   const A=meta(a),B=meta(b);
+   if(sort==='az')return A.name.localeCompare(B.name,'es');
+   if(sort==='za')return B.name.localeCompare(A.name,'es');
+   if(sort==='most')return B.count-A.count||A.name.localeCompare(B.name,'es');
+   if(sort==='least')return A.count-B.count||A.name.localeCompare(B.name,'es');
+   if(sort==='oldest')return (A.last?new Date(A.last):new Date(8640000000000000))-(B.last?new Date(B.last):new Date(8640000000000000))||A.name.localeCompare(B.name,'es');
+   return (B.last?new Date(B.last):0)-(A.last?new Date(A.last):0)||A.name.localeCompare(B.name,'es');
+ });
 }
 function catalogQuery(){return (document.getElementById('catalogSearch')?.value||'').trim().toLocaleLowerCase('es')}
 function renderGames(){
  const q=catalogQuery();
- const list=sortCatalog(games.filter(g=>gameName(g,field(g,"ID_JUEGO")).toLocaleLowerCase('es').includes(q)),catalogMetaGame);
- document.getElementById('gamesList').innerHTML=list.map(g=>{const id=field(g,"ID_JUEGO"),m=catalogMetaGame(g);return `<article class="game-card" data-game="${escape(id)}"><img src="images/${escape(gameImage(g))}" loading="lazy" decoding="async" onerror="this.style.visibility='hidden'"><h2>${escape(m.name)}</h2><div class="muted">${m.count} directos</div></article>`}).join('')||'<div class="empty">No se han encontrado juegos.</div>';document.querySelectorAll('.game-card').forEach(c=>c.onclick=()=>showGame(c.dataset.game));
+ const stats=buildGameStats();
+ const metaById=gameStatsMemo.map;
+ const list=games.filter(g=>gameName(g,field(g,"ID_JUEGO")).toLocaleLowerCase('es').includes(q));
+ const sort=document.getElementById('catalogSort')?.value||'recent';
+ list.sort((a,b)=>{
+   const aid=field(a,"ID_JUEGO"),bid=field(b,"ID_JUEGO"),A=metaById.get(aid)||{count:0,last:""},B=metaById.get(bid)||{count:0,last:""};
+   const an=gameName(a,aid),bn=gameName(b,bid);
+   if(sort==='az')return an.localeCompare(bn,'es');
+   if(sort==='za')return bn.localeCompare(an,'es');
+   if(sort==='most')return B.count-A.count||an.localeCompare(bn,'es');
+   if(sort==='least')return A.count-B.count||an.localeCompare(bn,'es');
+   if(sort==='oldest')return (A.last?new Date(A.last):new Date(8640000000000000))-(B.last?new Date(B.last):new Date(8640000000000000))||an.localeCompare(bn,'es');
+   return (B.last?new Date(B.last):0)-(A.last?new Date(A.last):0)||an.localeCompare(bn,'es');
+ });
+ document.getElementById('gamesList').innerHTML=list.map(g=>{
+   const id=field(g,"ID_JUEGO"),m=metaById.get(id)||{count:0};
+   return `<article class="game-card" data-game="${escape(id)}"><img src="images/${escape(gameImage(g))}" loading="lazy" decoding="async" onerror="this.style.visibility='hidden'"><h2>${escape(gameName(g,id))}</h2><div class="muted">${m.count} directos</div></article>`;
+ }).join('')||'<div class="empty">No se han encontrado juegos.</div>';
+ document.querySelectorAll('.game-card').forEach(c=>c.onclick=()=>showGame(c.dataset.game));
 }
 function renderSeries(){
  const q=catalogQuery();
- const list=sortCatalog(series.filter(s=>seriesName(s,field(s,"ID_SERIE")).toLocaleLowerCase('es').includes(q)),catalogMetaSeries);
- document.getElementById('seriesList').innerHTML=list.map(s=>{const sid=field(s,"ID_SERIE"),gid=field(s,"ID_JUEGO"),g=game(gid),link=seriesLink(s),m=catalogMetaSeries(s);return `<article class="series-card" data-series="${escape(sid)}"><img src="images/${escape(gameImage(g))}" loading="lazy" decoding="async" onerror="this.style.visibility='hidden'"><div class="series-card-body"><h2>${escape(m.name)}</h2><div class="series-game">${escape(gameName(g,gid))}</div><div class="series-count">${m.count} directos</div>${link?`<a class="playlist" href="${escape(link)}" target="_blank" rel="noopener">Ver playlist</a>`:''}</div></article>`}).join('')||'<div class="empty">No se han encontrado series.</div>';document.querySelectorAll('.series-card').forEach(c=>c.onclick=e=>{if(e.target.closest('a'))return;showSeries(c.dataset.series)});
+ const list=series.filter(s=>seriesName(s,field(s,"ID_SERIE")).toLocaleLowerCase('es').includes(q));
+ const sort=document.getElementById('catalogSort')?.value||'recent';
+ const metaCache=new Map();
+ const meta=s=>{const id=field(s,"ID_SERIE");if(!metaCache.has(id))metaCache.set(id,catalogMetaSeries(s));return metaCache.get(id)};
+ list.sort((a,b)=>{
+   const A=meta(a),B=meta(b);
+   if(sort==='az')return A.name.localeCompare(B.name,'es');
+   if(sort==='za')return B.name.localeCompare(A.name,'es');
+   if(sort==='most')return B.count-A.count||A.name.localeCompare(B.name,'es');
+   if(sort==='least')return A.count-B.count||A.name.localeCompare(B.name,'es');
+   if(sort==='oldest')return (A.last?new Date(A.last):new Date(8640000000000000))-(B.last?new Date(B.last):new Date(8640000000000000))||A.name.localeCompare(B.name,'es');
+   return (B.last?new Date(B.last):0)-(A.last?new Date(A.last):0)||A.name.localeCompare(B.name,'es');
+ });
+ document.getElementById('seriesList').innerHTML=list.map(s=>{
+   const sid=field(s,"ID_SERIE"),gid=field(s,"ID_JUEGO"),g=game(gid),link=seriesLink(s),m=meta(s);
+   return `<article class="series-card" data-series="${escape(sid)}"><img src="images/${escape(gameImage(g))}" loading="lazy" decoding="async" onerror="this.style.visibility='hidden'"><div class="series-card-body"><h2>${escape(m.name)}</h2><div class="series-game">${escape(gameName(g,gid))}</div><div class="series-count">${m.count} directos</div>${link?`<a class="playlist" href="${escape(link)}" target="_blank" rel="noopener">Ver playlist</a>`:''}</div></article>`;
+ }).join('')||'<div class="empty">No se han encontrado series.</div>';
+ document.querySelectorAll('.series-card').forEach(c=>c.onclick=e=>{if(e.target.closest('a'))return;showSeries(c.dataset.series)});
 }
 function gameStatsRows(filter="",search=""){
  const all=buildGameStats(),total=all.reduce((n,x)=>n+x.count,0);
