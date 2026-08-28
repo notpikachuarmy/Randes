@@ -163,3 +163,13 @@ footer{border-top:1px solid #292932;padding:22px 0;color:#777}.footer-inner{disp
 @media(max-width:1000px){.game-stat-header,.game-stat-row{grid-template-columns:34px minmax(180px,1.6fr) 105px 135px 120px 120px;gap:9px}.game-stat-header{padding:10px}.game-stat-row{padding:9px 10px}.game-stat-row time{font-size:.74rem}.game-stat-number small{font-size:.67rem}}
 @media(max-width:720px){.game-share-labels{min-height:46px}.game-share-label strong{font-size:.72rem}.game-share-label span{font-size:.58rem}.game-share-bar{height:72px}.game-stat-header{display:none}.game-stat-row{grid-template-columns:25px 1fr auto;gap:8px;padding:10px}.game-stat-game img{width:36px;height:46px}.game-stat-number{text-align:right}.game-stat-row time{grid-column:2 / 3;font-size:.72rem;color:#999}.game-stat-row time:last-child{grid-column:3;text-align:right}.game-share-legend{display:grid;grid-template-columns:1fr 1fr}.game-stats-controls{align-items:stretch;flex-wrap:wrap}.game-stats-controls input{flex-basis:100%}}
 @media(max-width:520px){.game-share-labels{min-height:40px}.game-share-label span{display:none}.game-share-label strong{font-size:.67rem}.game-share-bar{height:60px}.game-share-legend{grid-template-columns:1fr}.game-stat-game strong{font-size:.9rem}}
+
+/* Barra de estadísticas: repetir la portada horizontalmente, como TwitchTracker,
+   en vez de estirar una única imagen para todo el segmento. */
+.game-share-segment{
+  background-position:left center;
+  background-size:auto 100%;
+  background-repeat:repeat-x;
+}
+.game-share-segment img{display:none!important}
+.game-share-others{background-image:none!important}
