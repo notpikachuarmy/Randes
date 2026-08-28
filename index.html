@@ -17,8 +17,6 @@
         <button class="nav-btn active" data-page="inicio">Inicio</button>
         <button class="nav-btn" data-page="calendario">Calendario</button>
         <button class="nav-btn" data-page="catalogo">Gameplays</button>
-        <button class="nav-btn" data-page="casas">Casas</button>
-        <button class="nav-btn" data-page="fichas">Fichas</button>
         <button class="nav-btn" data-page="extra">Extra</button>
       </nav>
       <div class="socials">
@@ -32,44 +30,11 @@
 
   <main class="wrap">
     <section id="inicio" class="page active">
-      <div class="intro home-intro">
+      <div class="intro">
         <p class="eyebrow">BIENVENIDO</p>
         <h1>NotPikachu Army</h1>
         <p>La NotPikachu army, es la comunidad de Randes. Bienvenido a la familia.</p>
       </div>
-
-      <section class="home-section home-countdown-section">
-        <div id="hubStatus" class="hub-status"></div>
-      </section>
-
-      <section class="home-section home-links-section">
-        <div class="quick-links">
-          <button class="quick-link" data-go="calendario">📅 Calendario</button>
-          <button class="quick-link" data-go="catalogo">🎮 Gameplays</button>
-          <button class="quick-link" data-go="casas">🏆 Copa de las Casas</button>
-          <button class="quick-link" data-go="extra/medallas">🏅 Medallas</button>
-          <button class="quick-link" data-go="fichas">🃏 Fichas</button>
-          <a class="quick-link external" href="https://www.twitch.tv/elrandes" target="_blank" rel="noopener">📺 Ver Twitch</a>
-        </div>
-      </section>
-
-      <section class="home-section home-news-section">
-        <div class="section-heading">
-          <div><p class="eyebrow">ACTUALIDAD</p><h2>Novedades</h2></div>
-          <button id="refreshNews" class="text-btn" type="button">Actualizar</button>
-        </div>
-        <div id="newsList" class="news-list news-scroll">
-          <div class="empty">Cargando novedades…</div>
-        </div>
-      </section>
-
-      <section class="home-section home-ranking-section">
-        <div class="section-heading">
-          <div><p class="eyebrow">COPA DE LAS CASAS</p><h2>Clasificación</h2></div>
-          <button class="text-btn" data-go="casas">Ver casas</button>
-        </div>
-        <div id="houseHub" class="house-hub"><div class="empty">Cargando…</div></div>
-      </section>
     </section>
 
     <section id="calendario" class="page">
@@ -110,28 +75,12 @@
       <div class="page-top">
         <div>
           <p class="eyebrow">CATÁLOGO</p>
-          <h1>Gameplays</h1>
+          <h1>Gampelays</h1>
         </div>
       </div>
       <div class="catalog-tabs">
         <button class="catalog-btn active" data-catalog="juegos">Juegos</button>
         <button class="catalog-btn" data-catalog="series">Series</button>
-        <button class="catalog-btn" data-catalog="estadisticas">Estadísticas</button>
-      </div>
-
-      <div class="catalog-tools">
-        <input id="catalogSearch" type="search" placeholder="Buscar juego o serie..." autocomplete="off">
-        <label>
-          <span>Ordenar por</span>
-          <select id="catalogSort">
-            <option value="recent">Último directo más reciente</option>
-            <option value="oldest">Último directo más antiguo</option>
-            <option value="az">Nombre A-Z</option>
-            <option value="za">Nombre Z-A</option>
-            <option value="most">Más directos</option>
-            <option value="least">Menos directos</option>
-          </select>
-        </label>
       </div>
 
       <div id="catalog-juegos" class="catalog-page active">
@@ -140,36 +89,7 @@
       <div id="catalog-series" class="catalog-page">
         <div id="seriesList" class="series-grid"></div>
       </div>
-      <div id="catalog-estadisticas" class="catalog-page">
-        <div id="gameStatsContent"></div>
-      </div>
       <div id="catalog-detail" class="catalog-page"></div>
-    </section>
-
-    <section id="casas" class="page">
-      <div class="page-top">
-        <div><p class="eyebrow">COMUNIDAD</p><h1>Copa de las Casas</h1></div>
-        <div class="house-page-note">Afíliate a una casa, consigue puntos por hazañas y ayuda a tu casa a levantar la copa.</div>
-      </div>
-      <div id="housesContent" class="houses-content"><div class="empty">Cargando casas…</div></div>
-    </section>
-
-
-    <section id="fichas" class="page">
-      <div class="page-top">
-        <div><p class="eyebrow">COMUNIDAD</p><h1>Fichas</h1></div>
-        <div class="house-page-note">Consulta la información de las fichas, quién las tiene, las estadísticas y el historial de movimientos.</div>
-      </div>
-      <div class="fichas-tabs" role="tablist" aria-label="Secciones de Fichas">
-        <button class="fichas-tab active" data-fichas="info" role="tab">Información</button>
-        <button class="fichas-tab" data-fichas="usuarios" role="tab">Quién tiene qué</button>
-        <button class="fichas-tab" data-fichas="estadisticas" role="tab">Estadísticas</button>
-        <button class="fichas-tab" data-fichas="historial" role="tab">Historial</button>
-      </div>
-      <div id="fichas-info" class="fichas-page active"><div id="fichasInfoContent"></div></div>
-      <div id="fichas-usuarios" class="fichas-page"><div id="fichasUsersContent"></div></div>
-      <div id="fichas-estadisticas" class="fichas-page"><div id="fichasStatsContent"></div></div>
-      <div id="fichas-historial" class="fichas-page"><div id="fichasHistoryContent"></div></div>
     </section>
 
     <section id="extra" class="page">
@@ -238,13 +158,6 @@
           <p>Las medallas son los logros de la comunidad por hitos, hazañas o referencias a cosas de la propia comunidad.</p>
           <p>Se solicitan en Discord.</p>
           <a class="extra-link" href="https://notpikachuarmy.github.io/Medallas/" target="_blank" rel="noopener">Ver Medallas</a>
-          <div class="community-ranking">
-            <div class="section-heading compact-heading">
-              <div><p class="eyebrow">COMUNIDAD</p><h3>Ranking de medallas</h3></div>
-              <a class="text-btn" href="https://notpikachuarmy.github.io/Medallas/" target="_blank" rel="noopener">Ver completo</a>
-            </div>
-            <div id="medalRanking" class="medal-ranking"><div class="empty">Cargando ranking…</div></div>
-          </div>
         </article>
       </div>
 
