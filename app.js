@@ -483,14 +483,15 @@ function renderGameStats(){
      const img = gameImage(game(x.id));
      const share = Number(x.share) || 0;
      const count = Number(x.count) || 0;
-     const tiles = img ? `<div class="game-share-tiles" aria-hidden="true" style="position: absolute; inset: 0; background-image: url('images/${escape(img)}'); background-size: auto 100%; background-repeat: repeat-x; background-position: left center; pointer-events: none; z-index: 0;"></div>` : '';
+     const tiles = img ? `<div class="game-share-tiles" aria-hidden="true" style="position: absolute; inset: 0; background-image: url('images/${escape(img)}'); background-size: auto 100%; background-repeat: repeat-x; background-position: left center; pointer-events: none;"></div>` : '';
      
-     return `<button type="button" class="game-share-segment game-share-${i+1}" data-stat-filter="${escape(x.id)}" style="position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; min-width: 0;">
-       ${tiles}
-       <span class="game-share-overlay" aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0, 0, 0, 0.65); z-index: 1; pointer-events: none;"></span>
-       <div class="game-share-label" style="position: relative; z-index: 2; color: #ffffff; font-size: 12px; font-weight: bold; text-shadow: 0 1px 4px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 6px; text-align: center;">
-         <strong>${escape(x.name)}</strong> — <span>${share.toFixed(1)}% (${count})</span>
+     return `<button type="button" class="game-share-segment game-share-${i+1}" data-stat-filter="${escape(x.id)}">
+       <div class="game-share-tooltip">
+         <strong>${escape(x.name)}</strong>
+         <span>${count} directos · ${share.toFixed(1)}%</span>
        </div>
+       ${tiles}
+       <span class="game-share-overlay" aria-hidden="true"></span>
      </button>`;
    };
    
