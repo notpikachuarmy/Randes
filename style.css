@@ -175,3 +175,24 @@ footer{border-top:1px solid #292932;padding:22px 0;color:#777}.footer-inner{disp
 .game-share-others .game-share-overlay{background:transparent;}
 @media(max-width:720px){.game-share-bar{height:72px;}}
 @media(max-width:520px){.game-share-bar{height:60px;}}
+
+/* ===== GAMEPLAYS · BARRA DE DISTRIBUCIÓN · AJUSTE FINAL ===== */
+.game-share-labels{display:none!important}
+.game-share-legend{display:none!important}
+.game-share-bar{display:grid!important;width:100%;height:96px;margin-top:42px;gap:1px;overflow:visible!important;position:relative;border-radius:6px;background:#24242d;min-width:0}
+.game-share-segment{position:relative!important;width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;display:block!important;overflow:visible!important;border-radius:0!important;background:#24242d}
+.game-share-segment:first-child{border-radius:6px 0 0 6px}
+.game-share-segment:last-child{border-radius:0 6px 6px 0}
+.game-share-tiles{position:absolute;inset:0;display:flex;overflow:hidden;border-radius:inherit}
+.game-share-tiles img{width:72px!important;min-width:72px!important;height:96px!important;object-fit:cover!important;display:block!important;flex:none!important;margin:0!important;padding:0!important}
+.game-share-overlay{position:absolute!important;inset:0!important;z-index:2;background:rgba(0,0,0,.10);pointer-events:none;transition:background .15s}
+.game-share-tooltip{position:absolute;left:50%;bottom:calc(100% + 9px);transform:translate(-50%,4px);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:max-content;max-width:240px;padding:8px 11px;border:1px solid #3b3b47;border-radius:8px;background:rgba(16,16,21,.97);box-shadow:0 7px 22px rgba(0,0,0,.35);color:#fff;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .15s,transform .15s,visibility .15s;white-space:nowrap}
+.game-share-tooltip strong{font-size:.82rem;line-height:1.1}
+.game-share-tooltip span{font-size:.72rem;color:#c4c4cd;line-height:1.1}
+.game-share-segment:hover{filter:brightness(1.12);z-index:10}
+.game-share-segment:hover .game-share-overlay{background:rgba(255,255,255,.08)}
+.game-share-segment:hover .game-share-tooltip{opacity:1;visibility:visible;transform:translate(-50%,0)}
+.game-share-others{background:#666!important}
+.game-share-others .game-share-overlay{background:transparent}
+@media(max-width:720px){.game-share-bar{height:72px;margin-top:38px}.game-share-tiles img{height:72px!important;width:58px!important;min-width:58px!important}.game-share-tooltip{padding:7px 9px}.game-share-tooltip strong{font-size:.74rem}.game-share-tooltip span{font-size:.66rem}}
+@media(max-width:520px){.game-share-bar{height:60px;margin-top:34px}.game-share-tiles img{height:60px!important;width:50px!important;min-width:50px!important}}
