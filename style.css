@@ -197,47 +197,49 @@ footer{border-top:1px solid #292932;padding:22px 0;color:#777}.footer-inner{disp
 @media(max-width:720px){.game-share-bar{height:72px;margin-top:38px}.game-share-tiles img{height:72px!important;width:58px!important;min-width:58px!important}.game-share-tooltip{padding:7px 9px}.game-share-tooltip strong{font-size:.74rem}.game-share-tooltip span{font-size:.66rem}}
 @media(max-width:520px){.game-share-bar{height:60px;margin-top:34px}.game-share-tiles img{height:60px!important;width:50px!important;min-width:50px!important}}
 
-/* PÉGALO AL FINAL DE TU CSS */
+/* Corrección para la barra y los tooltips */
 
-.game-share-tiles {
-  display: flex !important;
-  width: 100%;
-  height: 42px;
-  border-radius: 6px;
-  overflow: hidden;
-  position: relative;
+.game-share-segment {
+  position: relative !important;
+  overflow: visible !important; /* Permite que el tooltip sobresalga por arriba */
 }
 
-.game-bar-segment {
-  position: relative;
-  height: 100%;
-  background-size: auto 100%;
-  background-repeat: repeat-x;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 40px;
-}
-
-.game-bar-overlay {
+/* Tooltip oculto por defecto */
+.game-share-tooltip {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.65); /* Oscurece la imagen para leer el texto */
-  z-index: 1;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  background: #18181b;
+  color: #ffffff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #3f3f46;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  white-space: nowrap; /* Evita que el texto se rompa o monte */
+  pointer-events: none;
+  z-index: 99;
+  
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
-.game-bar-label {
-  position: relative;
-  z-index: 2;
-  color: #ffffff;
-  font-size: 12px;
-  font-weight: bold;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis; /* Si no cabe el nombre largo, pone "..." */
-  padding: 0 8px;
-  text-shadow: 0 1px 4px #000;
+.game-share-tooltip strong {
+  display: block;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.game-share-tooltip span {
+  display: block;
+  font-size: 11px;
+  color: #a1a1aa;
+}
+
+/* Muestra el tooltip solo al pasar el ratón */
+.game-share-segment:hover .game-share-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(-8px);
 }
