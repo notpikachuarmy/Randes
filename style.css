@@ -196,3 +196,48 @@ footer{border-top:1px solid #292932;padding:22px 0;color:#777}.footer-inner{disp
 .game-share-others .game-share-overlay{background:transparent}
 @media(max-width:720px){.game-share-bar{height:72px;margin-top:38px}.game-share-tiles img{height:72px!important;width:58px!important;min-width:58px!important}.game-share-tooltip{padding:7px 9px}.game-share-tooltip strong{font-size:.74rem}.game-share-tooltip span{font-size:.66rem}}
 @media(max-width:520px){.game-share-bar{height:60px;margin-top:34px}.game-share-tiles img{height:60px!important;width:50px!important;min-width:50px!important}}
+
+/* PÉGALO AL FINAL DE TU CSS */
+
+.game-share-tiles {
+  display: flex !important;
+  width: 100%;
+  height: 42px;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.game-bar-segment {
+  position: relative;
+  height: 100%;
+  background-size: auto 100%;
+  background-repeat: repeat-x;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+}
+
+.game-bar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.65); /* Oscurece la imagen para leer el texto */
+  z-index: 1;
+}
+
+.game-bar-label {
+  position: relative;
+  z-index: 2;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Si no cabe el nombre largo, pone "..." */
+  padding: 0 8px;
+  text-shadow: 0 1px 4px #000;
+}
