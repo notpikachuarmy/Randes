@@ -166,12 +166,6 @@ footer{border-top:1px solid #292932;padding:22px 0;color:#777}.footer-inner{disp
 
 /* Barra de estadísticas: repetir la portada horizontalmente, como TwitchTracker,
    en vez de estirar una única imagen para todo el segmento. */
-.game-share-segment{
-  background-position:left center;
-  background-size:auto 100%;
-  background-repeat:repeat-x;
-}
-.game-share-segment img{display:none!important}
 .game-share-others{background-image:none!important}
 
 
