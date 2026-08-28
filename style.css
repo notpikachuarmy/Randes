@@ -197,14 +197,13 @@ footer{border-top:1px solid #292932;padding:22px 0;color:#777}.footer-inner{disp
 @media(max-width:720px){.game-share-bar{height:72px;margin-top:38px}.game-share-tiles img{height:72px!important;width:58px!important;min-width:58px!important}.game-share-tooltip{padding:7px 9px}.game-share-tooltip strong{font-size:.74rem}.game-share-tooltip span{font-size:.66rem}}
 @media(max-width:520px){.game-share-bar{height:60px;margin-top:34px}.game-share-tiles img{height:60px!important;width:50px!important;min-width:50px!important}}
 
-/* Corrección para la barra y los tooltips */
+/* Reemplazo completo para corregir tooltip y separaciones */
 
 .game-share-segment {
   position: relative !important;
-  overflow: visible !important; /* Permite que el tooltip sobresalga por arriba */
+  overflow: visible !important;
 }
 
-/* Tooltip oculto por defecto */
 .game-share-tooltip {
   position: absolute;
   bottom: 100%;
@@ -212,13 +211,20 @@ footer{border-top:1px solid #292932;padding:22px 0;color:#777}.footer-inner{disp
   transform: translateX(-50%) translateY(-4px);
   background: #18181b;
   color: #ffffff;
-  padding: 6px 10px;
+  padding: 8px 12px !important;
   border-radius: 6px;
   border: 1px solid #3f3f46;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  white-space: nowrap; /* Evita que el texto se rompa o monte */
+  white-space: nowrap;
   pointer-events: none;
   z-index: 99;
+  
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important; /* Separa verticalmente los textos */
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
   
   opacity: 0;
   visibility: hidden;
@@ -226,18 +232,20 @@ footer{border-top:1px solid #292932;padding:22px 0;color:#777}.footer-inner{disp
 }
 
 .game-share-tooltip strong {
-  display: block;
-  font-size: 13px;
-  line-height: 1.2;
+  display: block !important;
+  font-size: 13px !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
 }
 
 .game-share-tooltip span {
-  display: block;
-  font-size: 11px;
-  color: #a1a1aa;
+  display: block !important;
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+  color: #a1a1aa !important;
+  margin: 0 !important;
 }
 
-/* Muestra el tooltip solo al pasar el ratón */
 .game-share-segment:hover .game-share-tooltip {
   opacity: 1;
   visibility: visible;
