@@ -173,3 +173,43 @@ footer{border-top:1px solid #292932;padding:22px 0;color:#777}.footer-inner{disp
 }
 .game-share-segment img{display:none!important}
 .game-share-others{background-image:none!important}
+
+
+/* FIX: barra de distribución de Gameplays
+   Las secciones deben ocupar exactamente su porcentaje del ancho total.
+   Se usa width + flex-basis explícitos para evitar que el navegador las
+   trate como elementos flexibles mínimos. */
+.game-share-bar{
+  display:flex;
+  width:100%;
+  gap:0;
+  overflow:hidden;
+  box-sizing:border-box;
+}
+.game-share-segment{
+  flex-grow:0 !important;
+  flex-shrink:0 !important;
+  flex-basis:auto !important;
+  width:var(--segment-width);
+  min-width:0;
+  max-width:none;
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+.game-share-segment[style*="width:"]{
+  flex-basis:auto !important;
+}
+.game-share-labels{
+  display:flex;
+  width:100%;
+  gap:0;
+  box-sizing:border-box;
+}
+.game-share-label{
+  flex-grow:0 !important;
+  flex-shrink:0 !important;
+  flex-basis:auto !important;
+  min-width:0;
+  box-sizing:border-box;
+}
