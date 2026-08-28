@@ -485,7 +485,7 @@ function renderGameStats(){
      const count=Number(x.count)||0;
      // CORRECCIÓN 2: Aplicamos la imagen como fondo que se repite infinitamente (estilo TwitchTracker)
      const tiles=img?`<div class="game-share-tiles" aria-hidden="true" style="position: absolute; inset: 0; background-image: url('images/${escape(img)}'); background-size: auto 100%; background-repeat: repeat-x; background-position: left center; pointer-events: none;"></div>`:'';
-     return `<button type="button" class="game-share-segment game-share-${i+1}" data-stat-filter="${escape(x.id)}"><div class="game-share-tooltip"><strong>${escape(x.name)}</strong><span>${count} directos · ${share.toFixed(1)}%</span></div>${tiles}<span class="game-share-overlay" aria-hidden="true"></span></button>`;
+     return `<button type="button" class="game-share-segment game-share-${i+1}" data-stat-filter="${escape(x.id)}"><div class="game-share-tooltip" style="display: flex; flex-direction: column; gap: 4px; text-align: center;"><strong>${escape(x.name)}</strong><span>${count} directos · ${share.toFixed(1)}%</span></div>${tiles}<span class="game-share-overlay" aria-hidden="true"></span></button>`;
    };
    
    const othersShare=total?others/total*100:0;
