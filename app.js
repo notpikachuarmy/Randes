@@ -220,7 +220,7 @@ function houseNameForPerson(person){
 function houseLogo(h){return `images/logos_casas/${escape(h)}.png`;}
 function houseList(){
  const fromSheet=houses.map(x=>field(x,"CASA")).filter(Boolean);
- return [...new Set([...fromSheet,"Notpikador","Hojafailpuff","Fotopierin","Tototoclaw"])];
+ return [...new Set([...fromSheet,"Notpikador","Hojafailpuff","Fotopierin","Tototoclaw","Trubbishdor"])];
 }
 function pointValue(r){const n=Number(String(field(r,"Puntos")).replace(',','.'));return Number.isFinite(n)?n:0;}
 function pointDate(r){return cleanDate(field(r,"Fecha"));}
