@@ -273,7 +273,7 @@ function trophySort(list,sort){
 function trophyImage(t){return t.image?`images/trofeos/${escape(t.image)}`:'images/trofeos/trofeo_casa.png';}
 function renderHouseHub(){
  const host=document.getElementById('houseHub');if(!host)return;
- const ranked=allHouseTotals('').slice(0,4);
+ const ranked=allHouseTotals('');
  host.innerHTML=ranked.map((x,i)=>`<div class="house-hub-row"><span class="rank-number">#${i+1}</span><img src="${houseLogo(x.house)}" onerror="this.style.visibility='hidden'" alt=""><span><strong>${escape(x.house)}</strong><small>${x.students.length?escape(x.students[0].name):'Sin puntos aún'}</small></span><b>${x.total} pts</b></div>`).join('')||'<div class="empty">Aún no hay puntos.</div>';
 }
 function renderHouses(){
