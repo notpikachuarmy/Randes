@@ -238,7 +238,8 @@ function allHouseTotals(month=""){
  return houseList().map(h=>houseStats(h,month)).sort((a,b)=>b.total-a.total||a.house.localeCompare(b.house,'es'));
 }
 function availableHouseMonths(){
- const keys=[...new Set(housePoints.map(r=>monthKey(pointDate(r))).filter(Boolean))].sort().reverse();
+ const currentMonth=monthKey(madridToday());
+ const keys=[...new Set([...housePoints.map(r=>monthKey(pointDate(r))).filter(Boolean),currentMonth])].sort().reverse();
  return keys;
 }
 function finalizedHouseMonths(){
@@ -273,15 +274,18 @@ function trophySort(list,sort){
 function trophyImage(t){return t.image?`images/trofeos/${escape(t.image)}`:'images/trofeos/trofeo_casa.png';}
 function renderHouseHub(){
  const host=document.getElementById('houseHub');if(!host)return;
- const ranked=allHouseTotals('');
- host.innerHTML=ranked.map((x,i)=>`<div class="house-hub-row"><span class="rank-number">#${i+1}</span><img src="${houseLogo(x.house)}" onerror="this.style.visibility='hidden'" alt=""><span><strong>${escape(x.house)}</strong><small>${x.students.length?escape(x.students[0].name):'Sin puntos aún'}</small></span><b>${x.total} pts</b></div>`).join('')||'<div class="empty">Aún no hay puntos.</div>';
+ const currentMonth=monthKey(madridToday());
+ const ranked=allHouseTotals(currentMonth);
+ host.innerHTML=ranked.map((x,i)=>`<div class="house-hub-row"><span class="rank-number">#${i+1}</span><img src="${houseLogo(x.house)}" onerror="this.style.visibility='hidden'" alt=""><span><strong>${escape(x.house)}</strong><small>${x.students.length?escape(x.students[0].name):'Sin puntos este mes'}</small></span><b>${x.total} pts</b></div>`).join('')||'<div class="empty">Aún no hay puntos este mes.</div>';
 }
 function renderHouses(){
  const host=document.getElementById('housesContent');if(!host)return;
  const months=availableHouseMonths();
- if(!selectedHouseMonth)selectedHouseMonth=months[0]||'';
- const ranked=allHouseTotals('');
- const current=selectedHouseMonth?allHouseTotals(selectedHouseMonth):ranked;
+ const currentMonth=monthKey(madridToday());
+ if(!selectedHouseMonth)selectedHouseMonth=currentMonth;
+ if(!months.includes(selectedHouseMonth))selectedHouseMonth=months[0]||currentMonth;
+ const ranked=selectedHouseMonth?allHouseTotals(selectedHouseMonth):allHouseTotals('');
+ const current=ranked;
  const selected=houseList().includes(selectedHouse)?selectedHouse:houseList()[0];selectedHouse=selected;
  const stats=houseStats(selected,selectedHouseMonth);
  const trophies=houseTrophies(selected);
