@@ -251,3 +251,29 @@ footer{border-top:1px solid #292932;padding:22px 0;color:#777}.footer-inner{disp
   visibility: visible;
   transform: translateX(-50%) translateY(-8px);
 }
+
+/* ===== TIPOS DE LOCKE ===== */
+.locke-search{position:relative;margin:0 0 24px;max-width:760px}
+.locke-search>label{display:block;margin:0 0 8px;color:#aaa;font-size:.8rem;font-weight:700}
+.locke-search-box{position:relative}
+.locke-search input{width:100%;background:#17171e;color:#fff;border:1px solid #34343e;border-radius:10px;padding:12px 14px;font:inherit;outline:0}
+.locke-search input:focus{border-color:#5a5a68;box-shadow:0 0 0 3px rgba(255,255,255,.04)}
+.locke-suggestions{position:absolute;left:0;right:0;top:calc(100% + 6px);display:none;z-index:15;background:#17171e;border:1px solid #34343e;border-radius:12px;padding:6px;box-shadow:0 12px 30px rgba(0,0,0,.35)}
+.locke-suggestions.open{display:grid;gap:3px}
+.locke-suggestion{width:100%;text-align:left;border:0;background:transparent;color:#ddd;border-radius:8px;padding:10px 11px;cursor:pointer;font:inherit}
+.locke-suggestion:hover,.locke-suggestion.active{background:#2a2a33;color:#fff}
+.locke-cards{display:grid;gap:18px}
+.locke-card{padding:0;overflow:hidden;scroll-margin-top:96px}
+.locke-card[hidden]{display:none}
+.extra-card-summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:18px;padding:24px;cursor:pointer}
+.extra-card-summary::-webkit-details-marker{display:none}
+.extra-card-summary-main{min-width:0}
+.extra-card-summary-main .eyebrow{margin-bottom:4px}
+.extra-card-summary-main h2{margin:0}
+.extra-card-chevron{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border:1px solid #34343e;border-radius:9px;color:#aaa;font-size:1.15rem;transition:transform .15s ease,background .15s ease}
+.extra-card-summary:hover .extra-card-chevron{background:#2a2a33;color:#fff}
+.locke-card[open] .extra-card-chevron{transform:rotate(180deg)}
+.extra-card-body{padding:0 24px 24px}
+.extra-card-actions{display:flex;flex-wrap:wrap;gap:8px;margin:-2px 0 8px}
+.locke-card .extra-text h3:first-child{margin-top:24px}
+@media(max-width:700px){.extra-card-summary{padding:19px}.extra-card-body{padding:0 19px 19px}.extra-card-summary-main h2{font-size:1.3rem}.extra-card-actions{width:100%}.extra-card-actions .extra-link{flex:1;text-align:center}}

@@ -184,52 +184,178 @@
       </div>
 
       <div id="extra-locke" class="extra-page active">
-        <article class="extra-card">
-          <div class="extra-card-head">
-            <div><p class="eyebrow">CARDLOCKE</p><h2>Cardlocke</h2></div>
-            <a class="extra-link" href="https://notpikachuarmy.github.io/Cardlocke/" target="_blank" rel="noopener">Jugar Cardlocke</a>
+        <div class="locke-search" role="search">
+          <label for="lockeSearch">Buscar tipo de Locke</label>
+          <div class="locke-search-box">
+            <input id="lockeSearch" type="search" placeholder="Escribe un tipo de Locke…" autocomplete="off" aria-autocomplete="list" aria-controls="lockeSuggestions" aria-expanded="false">
+            <div id="lockeSuggestions" class="locke-suggestions" role="listbox"></div>
           </div>
-          <div class="extra-text">
-            <h3>Reglas convencionales</h3>
-            <ul>
-              <li>Solo un Pokémon por ruta.</li>
-              <li>Si un Pokémon se debilita, “muere” y va al PC a una caja separada permanentemente.</li>
-              <li>Todos los Pokémon tienen que tener mote.</li>
-              <li>No comprar consumibles de curación, salvo que solo puedas usar la misma cantidad que tu rival ha usado en el combate.</li>
-              <li>No pasar el nivel del Pokémon más fuerte del siguiente líder; en el campeón puedes usar directamente el del campeón o de cada alto mando.</li>
-            </ul>
-            <h3>Reglas extras Cardlocke</h3>
-            <ul>
-              <li>Al robar una carta, si es positiva, se guarda para decidir cuándo usarla, salvo que la carta especifique lo contrario. Si es negativa, su efecto entra en vigor desde ese momento.</li>
-              <li>Al iniciar la partida, después de elegir el inicial, se realiza el primer robo de carta.</li>
-              <li>Después de ganar cada combate de gimnasio, boss del equipo malvado o rival, se realiza un robo de carta. Los combates de liga no dan robo.</li>
-              <li>Antes de iniciar la Liga Pokémon se realiza el último robo de carta.</li>
-            </ul>
-          </div>
-        </article>
+        </div>
 
-        <article class="extra-card">
-          <div class="extra-card-head"><div><p class="eyebrow">ESFERALOCKE</p><h2>Esferalocke</h2></div><a class="extra-link" href="https://wheelofnames.com/es" target="_blank" rel="noopener">Abrir ruleta</a></div>
-          <div class="extra-text">
-            <h3>Reglas convencionales</h3>
-            <ul>
-              <li>Solo un Pokémon por ruta.</li>
-              <li>Si un Pokémon se debilita, “muere” y va al PC a una caja separada permanentemente.</li>
-              <li>Todos los Pokémon tienen que tener mote.</li>
-              <li>No comprar consumibles de curación, salvo que solo puedas usar la misma cantidad que tu rival ha usado en el combate.</li>
-              <li>No pasar el nivel del Pokémon más fuerte del siguiente líder; en el campeón puedes usar directamente el del campeón o de cada alto mando.</li>
-            </ul>
-            <h3>Reglas extras Esferalocke</h3>
-            <ul>
-              <li>Se pueden atrapar todos los Pokémon esféricos enumerados para fusiones. También se pueden criar con un Ditto en la guardería para conseguir todos los necesarios, aunque esto permita atrapar a Ditto aunque no sea el primero de ruta.</li>
-              <li>El cuerpo de la fusión siempre debe ser la esférica de la fusión.</li>
-              <li>Si hay más de un Pokémon esférico disponible para una fusión, el cuerpo se decide con ruleta.</li>
-            </ul>
-            <h3>Pokémon válidos</h3>
-            <p><strong>Líneas evolutivas enteras no califican:</strong> Igglybuff, Jigglypuff, Oddish, Venonat, Poliwag, Magnemite, Magneton, Gastly, Tangela, Hoothoot, Natu, Azurill, Marill, Forretress, Qwilfish, Wailmer, Glalie, Swablu, Cacnea, Minior, Goomy, Carvanha, Solosis, Duosion, Cottonee, Spheal, Shelgon, Glalie, Whismur, Gulpin, Castform, Chingling, Woobat.</p>
-            <p><strong>Líneas evolutivas enteras califican:</strong> línea Mankey, línea Geodude, línea Voltorb, línea Koffing, línea Hoppip, línea Drifloon.</p>
-          </div>
-        </article>
+        <div id="lockeCards" class="locke-cards">
+          <details class="extra-card locke-card" data-locke="cardlocke" open>
+            <summary class="extra-card-summary">
+              <div class="extra-card-summary-main"><p class="eyebrow">CARDLOCKE</p><h2>Cardlocke</h2></div>
+              <span class="extra-card-chevron" aria-hidden="true">⌄</span>
+            </summary>
+            <div class="extra-card-body">
+              <div class="extra-card-actions">
+                <a class="extra-link" href="https://notpikachuarmy.github.io/Cardlocke/" target="_blank" rel="noopener">Jugar Cardlocke</a>
+              </div>
+              <div class="extra-text">
+                <h3>Reglas convencionales</h3>
+                <ul>
+                  <li>Solo un Pokémon por ruta.</li>
+                  <li>Si un Pokémon se debilita, “muere” y va al PC a una caja separada permanentemente.</li>
+                  <li>Todos los Pokémon tienen que tener mote.</li>
+                  <li>No comprar consumibles de curación, salvo que solo puedas usar la misma cantidad que tu rival ha usado en el combate.</li>
+                  <li>No pasar el nivel del Pokémon más fuerte del siguiente líder; en el campeón puedes usar directamente el del campeón o de cada alto mando.</li>
+                </ul>
+                <h3>Reglas extras Cardlocke</h3>
+                <ul>
+                  <li>Al robar una carta, si es positiva, se guarda para decidir cuándo usarla, salvo que la carta especifique lo contrario. Si es negativa, su efecto entra en vigor desde ese momento.</li>
+                  <li>Al iniciar la partida, después de elegir el inicial, se realiza el primer robo de carta.</li>
+                  <li>Después de ganar cada combate de gimnasio, boss del equipo malvado o rival, se realiza un robo de carta. Los combates de liga no dan robo.</li>
+                  <li>Antes de iniciar la Liga Pokémon se realiza el último robo de carta.</li>
+                </ul>
+              </div>
+            </div>
+          </details>
+
+          <details class="extra-card locke-card" data-locke="esferalocke" open>
+            <summary class="extra-card-summary">
+              <div class="extra-card-summary-main"><p class="eyebrow">ESFERALOCKE</p><h2>Esferalocke</h2></div>
+              <span class="extra-card-chevron" aria-hidden="true">⌄</span>
+            </summary>
+            <div class="extra-card-body">
+              <div class="extra-card-actions">
+                <a class="extra-link" href="https://wheelofnames.com/es" target="_blank" rel="noopener">Abrir ruleta</a>
+                <a class="extra-link" href="https://drive.google.com/drive/folders/1po-gTN297CJWam2LBX_PKk1e7PkZfnII?usp=drive_link" target="_blank" rel="noopener">Paquete Esferalocke</a>
+              </div>
+              <div class="extra-text">
+                <h3>Reglas convencionales</h3>
+                <ul>
+                  <li>Solo un Pokémon por ruta.</li>
+                  <li>Si un Pokémon se debilita, “muere” y va al PC a una caja separada permanentemente.</li>
+                  <li>Todos los Pokémon tienen que tener mote.</li>
+                  <li>No comprar consumibles de curación, salvo que solo puedas usar la misma cantidad que tu rival ha usado en el combate.</li>
+                  <li>No pasar el nivel del Pokémon más fuerte del siguiente líder; en el campeón puedes usar directamente el del campeón o de cada alto mando.</li>
+                </ul>
+                <h3>Reglas extras Esferalocke</h3>
+                <ul>
+                  <li>Se pueden atrapar todos los Pokémon esféricos enumerados para fusiones. También se pueden criar con un Ditto en la guardería para conseguir todos los necesarios, aunque esto permita atrapar a Ditto aunque no sea el primero de ruta.</li>
+                  <li>El cuerpo de la fusión siempre debe ser la esférica de la fusión.</li>
+                  <li>Si hay más de un Pokémon esférico disponible para una fusión, el cuerpo se decide con ruleta.</li>
+                </ul>
+                <h3>Pokémon válidos</h3>
+                <p><strong>Líneas evolutivas enteras no califican:</strong> Igglybuff, Jigglypuff, Oddish, Venonat, Poliwag, Magnemite, Magneton, Gastly, Tangela, Hoothoot, Natu, Azurill, Marill, Forretress, Qwilfish, Wailmer, Glalie, Swablu, Cacnea, Minior, Goomy, Carvanha, Solosis, Duosion, Cottonee, Spheal, Shelgon, Whismur, Gulpin, Castform, Chingling, Woobat.</p>
+                <p><strong>Líneas evolutivas enteras califican:</strong> línea Mankey, línea Geodude, línea Voltorb, línea Koffing, línea Hoppip, línea Drifloon.</p>
+              </div>
+            </div>
+          </details>
+
+          <details class="extra-card locke-card" data-locke="villanolocke" open>
+            <summary class="extra-card-summary">
+              <div class="extra-card-summary-main"><p class="eyebrow">VILLANOLOCKE</p><h2>Villanolocke</h2></div>
+              <span class="extra-card-chevron" aria-hidden="true">⌄</span>
+            </summary>
+            <div class="extra-card-body">
+              <div class="extra-card-actions">
+                <a class="extra-link" href="https://docs.google.com/document/d/1swgsy8XoXc_iIdoQYYenK-T3USpy0w3UL9fjYjeK9WM/edit?tab=t.0#heading=h.jw00az3g1mxy" target="_blank" rel="noopener">Lista de Pokémon villanos</a>
+              </div>
+              <div class="extra-text">
+                <h3>Reglas convencionales</h3>
+                <ul>
+                  <li>Solo un Pokémon por ruta.</li>
+                  <li>Si un Pokémon se debilita, “muere” y va al PC a una caja separada permanentemente.</li>
+                  <li>Todos los Pokémon tienen que tener mote.</li>
+                  <li>No comprar consumibles de curación, salvo que solo puedas usar la misma cantidad que tu rival ha usado en el combate.</li>
+                  <li>No pasar el nivel del Pokémon más fuerte del siguiente líder; en el campeón puedes usar directamente el del campeón o de cada alto mando.</li>
+                </ul>
+                <h3>Reglas extras Villanolocke</h3>
+                <ul>
+                  <li><strong>Prioridad de Reclutamiento:</strong> si en una ruta sale un Pokémon villano (lista del documento), este tiene prioridad de captura y sustituye al primero de ruta. En caso de existir varios en la ruta, será el primero en salir. Todos los Pokémon que no sean villanos se considerarán mercenarios.</li>
+                  <li><strong>Jerarquía de combate:</strong> siempre que sea posible por no tener bajas o Pokémon insuficientes se deberá usar una jerarquía 4/2: el equipo deberá estar compuesto por 4 Pokémon Villanos y 2 Mercenarios, mínimo. El jugador puede optar por usar más de 4 Pokémon Villanos si los tiene, pero no más mercenarios si existen Pokémon villanos vivos o acabas de reclutar a alguno.</li>
+                  <li>Si estás jugando un fangame/hackroom puedes usar los Pokémon de la organización u organizaciones villanas del juego, salvo que consideres que no califican de malvados.</li>
+                  <li>Puedes decidir si jugar afiliado o sin afiliar. Afiliado te limita a los Pokémon de una organización villana; sin afiliar te permite usar Pokémon de todas las organizaciones villanas.</li>
+                  <li>Si los malos crean o buscan un Pokémon legendario, este entra en la lista de Pokémon válidos. En caso de tener dudas, pregunta en Discord o haz votación.</li>
+                </ul>
+              </div>
+            </div>
+          </details>
+
+          <details class="extra-card locke-card" data-locke="chimecholocke" open>
+            <summary class="extra-card-summary">
+              <div class="extra-card-summary-main"><p class="eyebrow">CHIMECHOLOCKE</p><h2>Chimecholocke</h2></div>
+              <span class="extra-card-chevron" aria-hidden="true">⌄</span>
+            </summary>
+            <div class="extra-card-body">
+              <div class="extra-card-actions">
+                <a class="extra-link" href="https://drive.google.com/drive/folders/1yZLr9qFrAQkhfXr2WvEOzENkY09BRh3M?usp=drive_link" target="_blank" rel="noopener">Paquete Chimecholocke</a>
+              </div>
+              <div class="extra-text">
+                <h3>Reglas convencionales</h3>
+                <ul>
+                  <li>Solo un Pokémon por ruta.</li>
+                  <li>Si un Pokémon se debilita, “muere” y va al PC a una caja separada permanentemente.</li>
+                  <li>Todos los Pokémon tienen que tener mote.</li>
+                  <li>No comprar consumibles de curación, salvo que solo puedas usar la misma cantidad que tu rival ha usado en el combate.</li>
+                  <li>No pasar el nivel del Pokémon más fuerte del siguiente líder; en el campeón puedes usar directamente el del campeón o de cada alto mando.</li>
+                </ul>
+                <h3>Reglas extras Chimecholocke</h3>
+                <ul><li>Solo fusiones de Chingling/Chimecho.</li></ul>
+              </div>
+            </div>
+          </details>
+
+          <details class="extra-card locke-card" data-locke="whiscahslocke" open>
+            <summary class="extra-card-summary">
+              <div class="extra-card-summary-main"><p class="eyebrow">WHISCAHSLOCKE</p><h2>Whiscahslocke</h2></div>
+              <span class="extra-card-chevron" aria-hidden="true">⌄</span>
+            </summary>
+            <div class="extra-card-body">
+              <div class="extra-card-actions">
+                <a class="extra-link" href="https://drive.google.com/drive/folders/1XSpbqtN2aqcr_VzTPpYel5H91fsgg-8P?usp=drive_link" target="_blank" rel="noopener">Paquete Whiscahslocke</a>
+              </div>
+              <div class="extra-text">
+                <h3>Reglas convencionales</h3>
+                <ul>
+                  <li>Solo un Pokémon por ruta.</li>
+                  <li>Si un Pokémon se debilita, “muere” y va al PC a una caja separada permanentemente.</li>
+                  <li>Todos los Pokémon tienen que tener mote.</li>
+                  <li>No comprar consumibles de curación, salvo que solo puedas usar la misma cantidad que tu rival ha usado en el combate.</li>
+                  <li>No pasar el nivel del Pokémon más fuerte del siguiente líder; en el campeón puedes usar directamente el del campeón o de cada alto mando.</li>
+                </ul>
+                <h3>Reglas extras Whiscahslocke</h3>
+                <ul><li>Solo fusiones de Barboach/Whiscash.</li></ul>
+              </div>
+            </div>
+          </details>
+
+          <details class="extra-card locke-card" data-locke="eonlocke" open>
+            <summary class="extra-card-summary">
+              <div class="extra-card-summary-main"><p class="eyebrow">EONLOCKE</p><h2>Eonlocke</h2></div>
+              <span class="extra-card-chevron" aria-hidden="true">⌄</span>
+            </summary>
+            <div class="extra-card-body">
+              <div class="extra-card-actions">
+                <a class="extra-link" href="https://drive.google.com/drive/folders/124EzxwdgRoGh836UBZcflUljgMGGVnTQ?usp=drive_link" target="_blank" rel="noopener">Paquete Eonlocke</a>
+              </div>
+              <div class="extra-text">
+                <h3>Reglas convencionales</h3>
+                <ul>
+                  <li>Solo un Pokémon por ruta.</li>
+                  <li>Si un Pokémon se debilita, “muere” y va al PC a una caja separada permanentemente.</li>
+                  <li>Todos los Pokémon tienen que tener mote.</li>
+                  <li>No comprar consumibles de curación, salvo que solo puedas usar la misma cantidad que tu rival ha usado en el combate.</li>
+                  <li>No pasar el nivel del Pokémon más fuerte del siguiente líder; en el campeón puedes usar directamente el del campeón o de cada alto mando.</li>
+                </ul>
+                <h3>Reglas extras Eonlocke</h3>
+                <ul><li>Solo fusiones de Eevee.</li></ul>
+              </div>
+            </div>
+          </details>
+        </div>
       </div>
 
       <div id="extra-medallas" class="extra-page">

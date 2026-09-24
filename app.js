@@ -674,6 +674,49 @@ function showExtra(sub='locke',push=true){
 
 function setupExtra(){
  document.querySelectorAll('.extra-tab').forEach(b=>b.onclick=()=>showExtra(b.dataset.extra));
+ setupLockeSearch();
+}
+
+function setupLockeSearch(){
+ const input=document.getElementById('lockeSearch');
+ const suggestions=document.getElementById('lockeSuggestions');
+ const cards=[...document.querySelectorAll('.locke-card')];
+ if(!input||!suggestions||!cards.length)return;
+ const names=cards.map(card=>({
+   key:card.dataset.locke,
+   name:card.querySelector('.extra-card-summary-main h2')?.textContent.trim()||card.dataset.locke
+ }));
+ let active=-1;
+ const closeSuggestions=()=>{suggestions.innerHTML='';suggestions.classList.remove('open');input.setAttribute('aria-expanded','false');active=-1};
+ const scrollToCard=(key)=>{
+   const card=cards.find(c=>c.dataset.locke===key);
+   if(!card)return;
+   cards.forEach(c=>{c.hidden=false});
+   card.open=true;
+   card.scrollIntoView({behavior:'smooth',block:'start'});
+   input.value=names.find(n=>n.key===key)?.name||'';
+   closeSuggestions();
+ };
+ const renderSuggestions=(query)=>{
+   const q=query.trim().toLowerCase();
+   const matches=(q?names.filter(n=>n.name.toLowerCase().includes(q)||n.key.includes(q)):names).slice(0,8);
+   suggestions.innerHTML=matches.map((m,i)=>`<button type="button" class="locke-suggestion ${i===active?'active':''}" role="option" aria-selected="${i===active?'true':'false'}" data-locke="${m.key}">${escape(m.name)}</button>`).join('');
+   suggestions.classList.toggle('open',matches.length>0);
+   input.setAttribute('aria-expanded',matches.length>0?'true':'false');
+   suggestions.querySelectorAll('.locke-suggestion').forEach(b=>b.onclick=()=>scrollToCard(b.dataset.locke));
+ };
+ input.addEventListener('input',()=>{active=-1;renderSuggestions(input.value);});
+ input.addEventListener('focus',()=>renderSuggestions(input.value));
+ input.addEventListener('keydown',e=>{
+   const items=[...suggestions.querySelectorAll('.locke-suggestion')];
+   if(e.key==='ArrowDown'&&items.length){e.preventDefault();active=(active+1)%items.length;renderSuggestions(input.value);items[active]?.scrollIntoView({block:'nearest'});}
+   else if(e.key==='ArrowUp'&&items.length){e.preventDefault();active=(active-1+items.length)%items.length;renderSuggestions(input.value);items[active]?.scrollIntoView({block:'nearest'});}
+   else if(e.key==='Enter'){e.preventDefault();const item=items[active]||items[0];if(item)scrollToCard(item.dataset.locke);}
+   else if(e.key==='Escape')closeSuggestions();
+ });
+ input.addEventListener('search',()=>{if(!input.value){cards.forEach(c=>{c.hidden=false});renderSuggestions('')}});
+ document.addEventListener('click',e=>{if(!e.target.closest('.locke-search'))closeSuggestions()});
+ cards.forEach(card=>card.addEventListener('toggle',()=>{if(card.open){cards.filter(c=>c!==card).forEach(c=>{c.open=false})}}));
 }
 function showPage(page,push=true){
  const valid=['inicio','calendario','catalogo','casas','fichas','extra'];if(!valid.includes(page))page='inicio';
