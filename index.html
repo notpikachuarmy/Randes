@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0e0e12">
   <title>NotPikachu Army</title>
+  <meta name="description" content="La web de la NotPikachu Army, la comunidad de Randes: calendario de directos, gameplays, Copa de las Casas, fichas, tipos de Locke y minijuegos.">
+  <link rel="preconnect" href="https://docs.google.com" crossorigin>
+  <link rel="dns-prefetch" href="https://notpikachuarmy.github.io">
   <link rel="icon" type="image/png" href="icon.png">
   <link rel="apple-touch-icon" href="icon.png">
   <link rel="stylesheet" href="style.css">
@@ -49,6 +52,7 @@
           <button class="quick-link" data-go="casas">🏆 Copa de las Casas</button>
           <button class="quick-link" data-go="extra/medallas">🏅 Medallas</button>
           <button class="quick-link" data-go="fichas">🃏 Fichas</button>
+          <button class="quick-link" data-go="extra/minijuegos">🕹️ Minijuegos</button>
           <a class="quick-link external" href="https://www.twitch.tv/elrandes" target="_blank" rel="noopener">📺 Ver Twitch</a>
         </div>
       </section>
@@ -355,6 +359,34 @@
               </div>
             </div>
           </details>
+
+          <details class="extra-card locke-card" data-locke="dadolocke" open>
+            <summary class="extra-card-summary">
+              <div class="extra-card-summary-main"><p class="eyebrow">DADOLOCKE</p><h2>Dadolocke</h2></div>
+              <span class="extra-card-chevron" aria-hidden="true">⌄</span>
+            </summary>
+            <div class="extra-card-body">
+              <div class="extra-card-actions">
+                <a class="extra-link extra-link-primary" href="https://notpikachuarmy.github.io/Dadolocke/" target="_blank" rel="noopener" data-embed="dadolocke">🎲 Tirar dado</a>
+                <a class="extra-link" href="https://notpikachuarmy.github.io/Dadolocke/" target="_blank" rel="noopener">Abrir en otra pestaña</a>
+              </div>
+              <div class="extra-text">
+                <p>El Dadolocke se puede aplicar sobre cualquier tipo de Locke base, convirtiéndolo en un Dadolocke.</p>
+                <h3>Reglas convencionales</h3>
+                <ul>
+                  <li>Solo un Pokémon por ruta.</li>
+                  <li>Si un Pokémon se debilita, “muere” y va al PC a una caja separada permanentemente.</li>
+                  <li>Todos los Pokémon tienen que tener mote.</li>
+                  <li>No comprar consumibles de curación, salvo que solo puedas usar la misma cantidad que tu rival ha usado en el combate.</li>
+                  <li>No pasar el nivel del Pokémon más fuerte del siguiente líder; en el campeón puedes usar directamente el del campeón o de cada alto mando.</li>
+                </ul>
+                <h3>Reglas extras Dadolocke</h3>
+                <ul>
+                  <li>Al entrar en una ruta o ciudad nueva se tira un dado en la web del Dadolocke, y se aplica la ventaja o desventaja que toque.</li>
+                </ul>
+              </div>
+            </div>
+          </details>
         </div>
       </div>
 
@@ -375,14 +407,96 @@
       </div>
 
       <div id="extra-minijuegos" class="extra-page">
-        <article class="extra-card compact">
-          <h2>R-Survivor</h2>
-          <p>Una especie de Vampire Survivors con temática de la NotPikachu Army.</p>
-          <a class="extra-link" href="https://notpikachuarmy.github.io/R-Survivor/" target="_blank" rel="noopener">Jugar R-Survivor</a>
-        </article>
+        <p class="minigames-note">Los minijuegos se abren aquí mismo, sin salir de la web. Si alguno no carga bien en tu navegador, usa «Nueva pestaña».</p>
+        <div class="minigames-grid">
+          <article class="minigame-card" data-minigame="cazador">
+            <div class="minigame-icon" aria-hidden="true">🧺</div>
+            <div class="minigame-body">
+              <h2>El Cazador de NotPikachus</h2>
+              <p>Atrapa a los NotPikachus para que no caigan al suelo.</p>
+              <div class="minigame-actions">
+                <a class="extra-link extra-link-primary" href="https://notpikachuarmy.github.io/El-Cazador-de-NotPikachus/" target="_blank" rel="noopener" data-embed="cazador">▶ Jugar aquí</a>
+                <a class="extra-link" href="https://notpikachuarmy.github.io/El-Cazador-de-NotPikachus/" target="_blank" rel="noopener">↗ Nueva pestaña</a>
+              </div>
+            </div>
+          </article>
+          <article class="minigame-card" data-minigame="hojafail">
+            <div class="minigame-icon" aria-hidden="true">🛫</div>
+            <div class="minigame-body">
+              <h2>Hojafail Airways: Tráfico Aéreo</h2>
+              <p>Un Flappy Bird con Hojafail esquivando el tráfico aéreo.</p>
+              <div class="minigame-actions">
+                <a class="extra-link extra-link-primary" href="https://notpikachuarmy.github.io/Hojafail-Airways-Tr-fico-A-reo/" target="_blank" rel="noopener" data-embed="hojafail">▶ Jugar aquí</a>
+                <a class="extra-link" href="https://notpikachuarmy.github.io/Hojafail-Airways-Tr-fico-A-reo/" target="_blank" rel="noopener">↗ Nueva pestaña</a>
+              </div>
+            </div>
+          </article>
+          <article class="minigame-card" data-minigame="salto-al-barro">
+            <div class="minigame-icon" aria-hidden="true">🟤</div>
+            <div class="minigame-body">
+              <h2>Salto al Barro</h2>
+              <p>Diviértete saltando antes de descansar en tu charquito de barro.</p>
+              <div class="minigame-actions">
+                <a class="extra-link extra-link-primary" href="https://notpikachuarmy.github.io/Salto-al-Barro/" target="_blank" rel="noopener" data-embed="salto-al-barro">▶ Jugar aquí</a>
+                <a class="extra-link" href="https://notpikachuarmy.github.io/Salto-al-Barro/" target="_blank" rel="noopener">↗ Nueva pestaña</a>
+              </div>
+            </div>
+          </article>
+          <article class="minigame-card" data-minigame="r-survivor">
+            <div class="minigame-icon" aria-hidden="true">⚔️</div>
+            <div class="minigame-body">
+              <h2>R-Survivor</h2>
+              <p>Una especie de Vampire Survivors con temática de la NotPikachu Army.</p>
+              <div class="minigame-actions">
+                <a class="extra-link extra-link-primary" href="https://notpikachuarmy.github.io/R-survivor-update/" target="_blank" rel="noopener" data-embed="r-survivor">▶ Jugar aquí</a>
+                <a class="extra-link" href="https://notpikachuarmy.github.io/R-survivor-update/" target="_blank" rel="noopener">↗ Nueva pestaña</a>
+              </div>
+            </div>
+          </article>
+          <article class="minigame-card" data-minigame="robo-de-randes">
+            <div class="minigame-icon" aria-hidden="true">💰</div>
+            <div class="minigame-body">
+              <h2>El Robo de Randes: Misión Surge</h2>
+              <p>Randes ha huido con el dinero. Esquiva, recoge lo que se le cae y, cuando se canse, esprinta para alcanzarlo y que suelte el botín. Al estilo del juego del dinosaurio de Google.</p>
+              <div class="minigame-actions">
+                <a class="extra-link extra-link-primary" href="https://notpikachuarmy.github.io/-robo/" target="_blank" rel="noopener" data-embed="robo-de-randes">▶ Jugar aquí</a>
+                <a class="extra-link" href="https://notpikachuarmy.github.io/-robo/" target="_blank" rel="noopener">↗ Nueva pestaña</a>
+              </div>
+            </div>
+          </article>
+          <article class="minigame-card" data-minigame="pokedex-adventure">
+            <div class="minigame-icon" aria-hidden="true">🎒</div>
+            <div class="minigame-body">
+              <h2>Pokédex Adventure</h2>
+              <p>Gestiona la mochila, sal de aventura y atrapa todas las especies para completar la Pokédex.</p>
+              <div class="minigame-actions">
+                <a class="extra-link extra-link-primary" href="https://notpikachuarmy.github.io/Diario-de-Expedici-n/" target="_blank" rel="noopener" data-embed="pokedex-adventure">▶ Jugar aquí</a>
+                <a class="extra-link" href="https://notpikachuarmy.github.io/Diario-de-Expedici-n/" target="_blank" rel="noopener">↗ Nueva pestaña</a>
+              </div>
+            </div>
+          </article>
+        </div>
       </div>
     </section>
   </main>
+
+  <dialog id="embedDialog" class="embed-dialog" aria-labelledby="embedTitle">
+    <div class="embed-shell">
+      <header class="embed-bar">
+        <strong id="embedTitle" class="embed-title">Minijuego</strong>
+        <div class="embed-tools">
+          <button type="button" class="embed-btn" id="embedReload" title="Reiniciar">↻ <span>Reiniciar</span></button>
+          <button type="button" class="embed-btn" id="embedFullscreen" title="Pantalla completa">⛶ <span>Pantalla completa</span></button>
+          <a class="embed-btn" id="embedExternal" href="#" target="_blank" rel="noopener" title="Abrir en otra pestaña">↗ <span>Otra pestaña</span></a>
+          <button type="button" class="embed-btn embed-close" id="embedClose" title="Cerrar" aria-label="Cerrar">✕</button>
+        </div>
+      </header>
+      <div class="embed-stage">
+        <div class="embed-loading" id="embedLoading">Cargando…</div>
+        <iframe id="embedFrame" title="Minijuego" allow="fullscreen; autoplay; gamepad; clipboard-write" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+    </div>
+  </dialog>
 
   <footer>
     <div class="wrap footer-inner">
@@ -395,6 +509,6 @@
       </div>
     </div>
   </footer>
-  <script src="app.js"></script>
+  <script src="app.js" defer></script>
 </body>
 </html>

@@ -346,7 +346,7 @@ function renderNews(){
  host.innerHTML=latest.length?latest.map(n=>{const type=field(n,"TIPO"),title=field(n,"TITULO")||field(n,"TÍTULO"),desc=field(n,"DESCRIPCION")||field(n,"DESCRIPCIÓN"),link=field(n,"ENLACE");return `<article class="news-item"><div class="news-meta">${escape(type||'NOVEDAD')} · ${escape(fmtDate(field(n,"FECHA")))}</div><h3>${escape(title)}</h3>${desc?`<p>${escape(desc)}</p>`:''}${link?`<a class="playlist" href="${escape(link)}" target="_blank" rel="noopener">Ver más</a>`:''}</article>`}).join(''):'<div class="empty">Todavía no hay novedades.</div>';
 }
 function setupHome(){
- document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{const route=b.dataset.go.split('/');showPage(route[0]);if(route[0]==='extra'&&route[1])showExtra(route[1]);});
+ document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{const route=b.dataset.go.split('/');const sub=route[0]==='extra'&&route[1];showPage(route[0],!sub);if(sub)showExtra(route[1]);window.scrollTo({top:0});});
  document.getElementById('refreshNews')?.addEventListener('click',async()=>{if(SOURCES.news){try{news=await loadCSV(SOURCES.news,{force:true,ttl:0});renderNews()}catch(e){console.error(e)}}});
 }
 function renderToday(){const today=madridToday(),ss=streams.filter(s=>cleanDate(field(s,"FECHA"))===today).sort((a,b)=>Number(field(a,"DIRECTO"))-Number(field(b,"DIRECTO")));document.getElementById('today').innerHTML=ss.length?`<div class="today-grid">${ss.map(streamCard).join('')}</div>`:`<div class="empty">Hoy no hay directo.</div>`}
@@ -675,6 +675,7 @@ function showExtra(sub='locke',push=true){
 function setupExtra(){
  document.querySelectorAll('.extra-tab').forEach(b=>b.onclick=()=>showExtra(b.dataset.extra));
  setupLockeSearch();
+ setupEmbeds();
 }
 
 function setupLockeSearch(){
@@ -718,6 +719,60 @@ function setupLockeSearch(){
  document.addEventListener('click',e=>{if(!e.target.closest('.locke-search'))closeSuggestions()});
  cards.forEach(card=>card.addEventListener('toggle',()=>{if(card.open){cards.filter(c=>c!==card).forEach(c=>{c.open=false})}}));
 }
+
+/* ===== MINIJUEGOS / WEBS INCRUSTADAS ===== */
+const EMBEDS={};
+let currentEmbed=null,embedPushed=false;
+function setupEmbeds(){
+ document.querySelectorAll('[data-embed]').forEach(a=>{
+   const key=a.dataset.embed;
+   const page=a.closest('.extra-page');
+   const card=a.closest('[data-minigame],[data-locke]');
+   const title=key==='dadolocke'?'Dadolocke · Tirar dado':(card?.querySelector('h2')?.textContent.trim()||key);
+   EMBEDS[key]={url:a.href,title,sub:(page?.id||'extra-minijuegos').replace('extra-','')};
+   a.addEventListener('click',e=>{
+     if(e.ctrlKey||e.metaKey||e.shiftKey||e.button===1)return; // permitir abrir en pestaña nueva
+     e.preventDefault();openEmbed(key);
+   });
+ });
+ const dlg=document.getElementById('embedDialog');if(!dlg)return;
+ const frame=document.getElementById('embedFrame');
+ frame.addEventListener('load',()=>{if(frame.src&&frame.src!=='about:blank'){document.getElementById('embedLoading').hidden=true;try{frame.focus()}catch(_){}}});
+ document.getElementById('embedClose').onclick=()=>closeEmbed();
+ document.getElementById('embedReload').onclick=()=>{if(!currentEmbed)return;document.getElementById('embedLoading').hidden=false;frame.src=EMBEDS[currentEmbed].url;};
+ const fsBtn=document.getElementById('embedFullscreen');
+ const canFS=document.fullscreenEnabled||document.webkitFullscreenEnabled;
+ if(!canFS)fsBtn.hidden=true;
+ fsBtn.onclick=()=>{const el=frame;(el.requestFullscreen||el.webkitRequestFullscreen)?.call(el);};
+ dlg.addEventListener('cancel',e=>{e.preventDefault();closeEmbed();});
+ dlg.addEventListener('click',e=>{if(e.target===dlg)closeEmbed();}); // clic fuera de la ventana
+}
+function openEmbed(key,push=true){
+ const item=EMBEDS[key];const dlg=document.getElementById('embedDialog');if(!item||!dlg)return;
+ if(currentEmbed===key&&dlg.open)return;
+ currentEmbed=key;
+ document.getElementById('embedTitle').textContent=item.title;
+ document.getElementById('embedExternal').href=item.url;
+ document.getElementById('embedLoading').hidden=false;
+ const frame=document.getElementById('embedFrame');frame.title=item.title;frame.src=item.url;
+ if(!dlg.open)dlg.showModal();
+ document.documentElement.classList.add('embed-open');
+ if(push){history.pushState({page:'extra',sub:item.sub,embed:key},'',`#extra/${item.sub}/${key}`);embedPushed=true;}
+}
+function closeEmbed(fromHistory=false){
+ const dlg=document.getElementById('embedDialog');if(!dlg||!currentEmbed)return;
+ const item=EMBEDS[currentEmbed];
+ currentEmbed=null;
+ const frame=document.getElementById('embedFrame');frame.src='about:blank'; // corta el sonido y libera memoria
+ if(document.fullscreenElement)document.exitFullscreen?.().catch(()=>{});
+ if(dlg.open)dlg.close();
+ document.documentElement.classList.remove('embed-open');
+ if(!fromHistory){
+   if(embedPushed){embedPushed=false;history.back();}
+   else history.replaceState({page:'extra',sub:item.sub},'',`#extra/${item.sub}`);
+ }
+ embedPushed=false;
+}
 function showPage(page,push=true){
  const valid=['inicio','calendario','catalogo','casas','fichas','extra'];if(!valid.includes(page))page='inicio';
  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===page));document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
@@ -734,6 +789,7 @@ function setupWeek(){document.getElementById('prevWeek').onclick=()=>{weekOffset
 function restoreRoute(push=false){
  const p=location.hash.replace('#','').split('/');
  const page=p[0]||'inicio';
+ if(page!=='extra')closeEmbed(true);
  if(page==='calendario'){
    showPage('calendario',push);
    showSub(p[1]==='stats'?'stats':'semana',push);
@@ -764,30 +820,42 @@ function restoreRoute(push=false){
  }else if(page==='extra'){
    showPage('extra',push);
    showExtra(p[1]||'locke',push);
+   if(p[2]&&EMBEDS[p[2]])openEmbed(p[2],false);else closeEmbed(true);
  }else{
    showPage('inicio',push);
  }
 }
 async function init(){
+ // La interfaz se prepara antes de descargar datos: la navegación, los Lockes y los
+ // minijuegos funcionan aunque Google Sheets tarde o falle.
+ setupTZ();setupNav();setupWeek();setupCatalog();setupExtra();setupFichas();setupHome();
+ const corePages=['inicio','calendario','catalogo'];
+ const startPage=location.hash.replace('#','').split('/')[0]||'inicio';
+ if(!corePages.includes(startPage))restoreRoute(false);
  try{
    const [g,s,st]=await ensureData('core',[SOURCES.games,SOURCES.series,SOURCES.streams]);
    games=g;series=s;streams=st;
-   setupTZ();setupNav();setupWeek();setupCatalog();setupExtra();setupFichas();setupHome();
-   renderHub();renderWeek();renderStats();renderGames();restoreRoute(false);
-   requestIdle(()=>{
-     Promise.all([
-       ensureData('home',[SOURCES.news,SOURCES.houses,SOURCES.housePoints]),
-     ]).then(([data])=>{news=data[0];houses=data[1];housePoints=data[2];renderNews();renderHouseHub()}).catch(e=>console.warn('Datos secundarios no disponibles',e));
-   });
- }catch(e){console.error(e);document.getElementById('today').innerHTML='<div class="empty">No se ha podido cargar el calendario.</div>'}
+   renderHub();renderWeek();renderStats();renderGames();
+   const nowPage=location.hash.replace('#','').split('/')[0]||'inicio';
+   if(corePages.includes(nowPage))restoreRoute(false);
+ }catch(e){
+   console.error(e);
+   document.getElementById('today').innerHTML='<div class="empty">No se ha podido cargar el calendario. Recarga la página en unos segundos.</div>';
+   const hub=document.getElementById('hubStatus');if(hub)hub.innerHTML='<div class="hub-card"><div class="hub-label">ESTADO</div><h2>No se ha podido cargar el próximo directo</h2><p>Recarga la página en unos segundos.</p></div>';
+   if(corePages.includes(startPage))restoreRoute(false);
+ }
+ requestIdle(()=>{
+   ensureData('home',[SOURCES.news,SOURCES.houses,SOURCES.housePoints])
+     .then(([n,h,p])=>{news=n;houses=h;housePoints=p;renderNews();renderHouseHub()})
+     .catch(e=>{console.warn('Datos secundarios no disponibles',e);const nl=document.getElementById('newsList');if(nl&&!news.length)nl.innerHTML='<div class="empty">No se han podido cargar las novedades. Pulsa «Actualizar» para reintentar.</div>';});
+ });
 }
-
 init();
 
 // Las estadísticas dependen de la hora actual, no del cambio de día.
 // Refrescamos cada 30 segundos para que un directo pase a "contado"
 // automáticamente cuando se cumple su hora de finalización.
-setInterval(()=>{
+function refreshLive(){
   if(streams.length){
     renderStats();
     if(document.getElementById('calendario')?.classList.contains('active')){
@@ -795,4 +863,6 @@ setInterval(()=>{
       renderWeek();
     }
   }
-},30000);
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshLive();});
+setInterval(()=>{if(!document.hidden)refreshLive();},30000);

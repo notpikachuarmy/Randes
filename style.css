@@ -277,3 +277,39 @@ footer{border-top:1px solid #292932;padding:22px 0;color:#777}.footer-inner{disp
 .extra-card-actions{display:flex;flex-wrap:wrap;gap:8px;margin:-2px 0 8px}
 .locke-card .extra-text h3:first-child{margin-top:24px}
 @media(max-width:700px){.extra-card-summary{padding:19px}.extra-card-body{padding:0 19px 19px}.extra-card-summary-main h2{font-size:1.3rem}.extra-card-actions{width:100%}.extra-card-actions .extra-link{flex:1;text-align:center}}
+
+/* ===== MINIJUEGOS ===== */
+.minigames-note{margin:0 0 18px;color:#a9a9b3;line-height:1.55;max-width:760px}
+.minigames-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+.minigame-card{display:grid;grid-template-columns:52px 1fr;grid-template-rows:auto 1fr auto;column-gap:14px;align-items:center;background:#17171d;border:1px solid #292932;border-radius:18px;padding:20px;transition:border-color .15s}
+.minigame-card:hover{border-color:#454552}
+.minigame-icon{width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:1.65rem;background:#202029;border:1px solid #34343e;border-radius:13px}
+.minigame-body{display:contents}
+.minigame-body h2{margin:0;font-size:1.18rem;line-height:1.25}
+.minigame-body p{grid-column:1/-1;align-self:start;margin:14px 0 18px;color:#c4c4cb;line-height:1.55;font-size:.95rem}
+.minigame-actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px}
+.extra-link-primary{background:#f4f4f5;color:#111116;border-color:#f4f4f5;font-weight:800}
+.extra-link-primary:hover{background:#fff;color:#000}
+.extra-link:focus-visible,.embed-btn:focus-visible,.quick-link:focus-visible{outline:2px solid #fff;outline-offset:2px}
+@media(max-width:620px){.minigames-grid{grid-template-columns:1fr}.minigame-card{grid-template-columns:44px 1fr;padding:16px;column-gap:12px}.minigame-icon{width:44px;height:44px;font-size:1.4rem;border-radius:11px}.minigame-actions .extra-link{flex:1;text-align:center}}
+
+/* ===== VENTANA DE JUEGO ===== */
+html.embed-open,html.embed-open body{overflow:hidden}
+.embed-dialog{padding:0;border:1px solid #34343e;border-radius:16px;background:#0f0f14;color:#f4f4f5;width:min(1280px,96vw);height:min(860px,92vh);max-width:none;max-height:none;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.embed-dialog::backdrop{background:rgba(5,5,8,.82);backdrop-filter:blur(3px)}
+.embed-shell{display:flex;flex-direction:column;height:100%}
+.embed-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px 10px 18px;border-bottom:1px solid #292932;background:#15151b}
+.embed-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:1rem}
+.embed-tools{display:flex;gap:6px;flex:0 0 auto}
+.embed-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid #34343e;background:#1d1d25;color:#ddd;border-radius:9px;padding:7px 11px;cursor:pointer;font:inherit;font-size:.85rem;text-decoration:none;line-height:1.2}
+.embed-btn:hover{background:#2a2a33;color:#fff}
+.embed-close{font-weight:900;padding:7px 12px}
+.embed-stage{position:relative;flex:1;background:#000}
+.embed-stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:#000}
+.embed-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#9a9aa4;z-index:1;pointer-events:none}
+.embed-loading[hidden]{display:none}
+@media(max-width:720px){.embed-dialog{width:100vw;height:100dvh;max-height:100dvh;border-radius:0;border:0}.embed-btn span{display:none}.embed-bar{padding:8px 8px 8px 14px}}
+@media(prefers-reduced-motion:reduce){.minigame-card{transition:none}}
+.locke-card{scroll-margin-top:96px}@media(max-width:900px){.locke-card{scroll-margin-top:16px}}
+@media(max-width:620px){.minigame-actions .extra-link{white-space:nowrap;padding:9px 8px;font-size:.92rem}}
+@media(max-width:900px){nav{flex-wrap:wrap}}
